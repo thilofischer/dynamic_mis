@@ -1,0 +1,5 @@
+
+papers/
+src/*.pyc
+.idea
+src/__pycache__/
