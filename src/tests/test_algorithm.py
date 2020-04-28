@@ -6,7 +6,7 @@ from algorithm import *
 
 class TestIsValidMIS(unittest.TestCase):
 
-    @patch.object(SimpleRelaxedMIS, 'is_in_mis')
+    @patch.object(SimpleMIS, 'is_in_mis')
     def test_neighbors_in_mis(self, mock_is_in_mis):
         graph = nx.Graph()
         graph.add_nodes_from([1, 2])
@@ -14,45 +14,45 @@ class TestIsValidMIS(unittest.TestCase):
 
         mock_is_in_mis.return_value = True
 
-        srm = SimpleRelaxedMIS(graph)
+        srm = SimpleMIS(graph)
 
         self.assertFalse(srm.is_valid_mis())
 
-    @patch.object(SimpleRelaxedMIS, 'is_in_mis')
+    @patch.object(SimpleMIS, 'is_in_mis')
     def test_empty_is(self, mock_is_in_mis):
         graph = nx.Graph()
         graph.add_nodes_from([1, 2])
 
         mock_is_in_mis.return_value = False
-        srm = SimpleRelaxedMIS(graph)
+        srm = SimpleMIS(graph)
 
         self.assertFalse(srm.is_valid_mis())
 
-    @patch.object(SimpleRelaxedMIS, 'is_in_mis')
+    @patch.object(SimpleMIS, 'is_in_mis')
     def test_valid_mis(self, mock_is_in_mis):
         graph = nx.Graph()
         graph.add_nodes_from([1, 2])
 
         mock_is_in_mis.return_value = True
-        srm = SimpleRelaxedMIS(graph)
+        srm = SimpleMIS(graph)
 
         self.assertTrue(srm.is_valid_mis())
 
-    @patch.object(SimpleRelaxedMIS, 'is_in_mis')
+    @patch.object(SimpleMIS, 'is_in_mis')
     def test_non_maximal(self, mock_is_in_mis):
         graph = nx.Graph()
         graph.add_nodes_from([1, 2])
 
         # Only node 1 is in MIS but 2 could be also
         mock_is_in_mis.side_effect = lambda v: v == 1
-        srm = SimpleRelaxedMIS(graph)
+        srm = SimpleMIS(graph)
 
         self.assertFalse(srm.is_valid_mis())
 
 
 # Test remove node functionality
 def _helper_explicit_remove_node(test, cls):
-    g = nx.gnp_random_graph(10, 0.3, seed=1234)
+    g = nx.gnp_random_graph(20, 0.3, seed=1234)
     inst = cls(g)
 
     test.assertTrue(inst.is_valid_mis())
@@ -68,29 +68,30 @@ def _helper_explicit_remove_node(test, cls):
 class TestTrivialMIS(unittest.TestCase):
 
     def test_valid(self):
-        g = nx.gnp_random_graph(10, 0.3, seed=1234)
+        g = nx.gnp_random_graph(20, 0.3, seed=1234)
         tmis = TrivialMIS(g)
         self.assertTrue(tmis.is_valid_mis())
 
     def test_remove_node(self):
         _helper_explicit_remove_node(self, TrivialMIS)
 
-class TestSimpleRelaxedMIS(unittest.TestCase):
+
+class TestSimpleMIS(unittest.TestCase):
 
     def test_valid(self):
-        g = nx.gnp_random_graph(10, 0.3, seed=6578)
-        srm = SimpleRelaxedMIS(g)
-        self.assertTrue(srm.is_valid_mis())
+        g = nx.gnp_random_graph(20, 0.3, seed=1234)
+        sm = SimpleMIS(g)
+        self.assertTrue(sm.is_valid_mis())
 
     def test_remove_node(self):
-        _helper_explicit_remove_node(self, SimpleExplicitMIS)
+        _helper_explicit_remove_node(self, SimpleMIS)
 
-class TestSimpleExplicitMIS(unittest.TestCase):
+class TestImprovedIncrementalMIS(unittest.TestCase):
 
     def test_valid(self):
-        g = nx.gnp_random_graph(10, 0.3, seed=1234)
-        sem = SimpleExplicitMIS(g)
-        self.assertTrue(sem.is_valid_mis())
+        g = nx.gnp_random_graph(20, 0.3, seed=1234)
+        sm = SimpleMIS(g)
+        self.assertTrue(sm.is_valid_mis())
 
     def test_remove_node(self):
-        _helper_explicit_remove_node(self, SimpleExplicitMIS)
+        _helper_explicit_remove_node(self, SimpleMIS)
