@@ -1,7 +1,10 @@
 import unittest
 from unittest.mock import MagicMock, patch
 import networkx as nx
+from typing import Type
+import numpy as np
 from algorithm import *
+from visualize import *
 
 
 class TestIsValidMIS(unittest.TestCase):
@@ -50,21 +53,6 @@ class TestIsValidMIS(unittest.TestCase):
         self.assertFalse(srm.is_valid_mis())
 
 
-# Test remove node functionality
-def _helper_explicit_remove_node(test, cls):
-    g = nx.gnp_random_graph(20, 0.3, seed=1234)
-    inst = cls(g)
-
-    test.assertTrue(inst.is_valid_mis())
-
-    size_before = len(inst.get_mis())
-    v = list(inst.get_mis())[0]
-    inst.remove_node(v)
-
-    test.assertTrue(inst.is_valid_mis())
-    # test.assertEqual(size_before - 1, len(inst.get_mis()))
-
-
 class TestTrivialMIS(unittest.TestCase):
 
     def test_valid(self):
@@ -72,8 +60,11 @@ class TestTrivialMIS(unittest.TestCase):
         tmis = TrivialMIS(g)
         self.assertTrue(tmis.is_valid_mis())
 
-    def test_remove_node(self):
-        _helper_explicit_remove_node(self, TrivialMIS)
+    def test_remove_nodes(self):
+        _test_remove_nodes(self, TrivialMIS)
+
+    def test_remove_edges(self):
+        _test_remove_edges(self, TrivialMIS)
 
 
 class TestSimpleMIS(unittest.TestCase):
@@ -83,8 +74,11 @@ class TestSimpleMIS(unittest.TestCase):
         sm = SimpleMIS(g)
         self.assertTrue(sm.is_valid_mis())
 
-    def test_remove_node(self):
-        _helper_explicit_remove_node(self, SimpleMIS)
+    def test_remove_nodes(self):
+        _test_remove_nodes(self, SimpleMIS)
+
+    def test_remove_edges(self):
+        _test_remove_edges(self, SimpleMIS)
 
 class TestImprovedIncrementalMIS(unittest.TestCase):
 
@@ -93,5 +87,33 @@ class TestImprovedIncrementalMIS(unittest.TestCase):
         sm = SimpleMIS(g)
         self.assertTrue(sm.is_valid_mis())
 
-    def test_remove_node(self):
-        _helper_explicit_remove_node(self, SimpleMIS)
+
+def _test_remove_nodes(test: unittest.TestCase, cls: Type[MISAlgorithm]):
+    g = nx.gnp_random_graph(20, 0.3, seed=42)
+    removal_order = np.random.RandomState(seed=42).permutation(g.nodes)
+    algo = cls(g)
+
+    test.assertTrue(algo.is_valid_mis())
+
+    for n in removal_order:
+        algo.remove_node(n)
+        test.assertFalse(n in g.nodes)
+        test.assertTrue(algo.is_valid_mis())
+
+
+def _test_remove_edges(test: unittest.TestCase, cls: Type[MISAlgorithm]):
+    g = nx.gnp_random_graph(5, 0.3, seed=42)
+    removal_order = np.random.RandomState(seed=42).permutation(g.edges)
+    algo = cls(g)
+
+    history = []
+
+    test.assertTrue(algo.is_valid_mis())
+
+    for e in removal_order:
+        algo.remove_edge(*e)
+        history.append(algo.get_state())
+        test.assertFalse(e in g.edges)
+        test.assertTrue(algo.is_valid_mis())
+
+    # animate(*zip(*history))

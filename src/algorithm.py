@@ -62,6 +62,9 @@ class MISAlgorithm(Algorithm):
 
         return True
 
+    def get_state(self):
+        return set(self._graph.nodes), self.get_mis(), set(self._graph.edges)
+
 
 class TrivialMIS(MISAlgorithm):
 
@@ -152,7 +155,9 @@ class SimpleMIS(MISAlgorithm):
         if self.is_in_mis(v):
             self._mis.remove(v)
             for w in self._graph[v]:
-                self._decrease_count(w)
+                if self._decrease_count(w):
+                    for x in self._graph[w]:
+                        self._increase_count(x)
         self._graph.remove_node(v)
 
     def insert_edge(self, u, v):
@@ -168,15 +173,22 @@ class SimpleMIS(MISAlgorithm):
 
     def remove_edge(self, u, v):
         if self.is_in_mis(u) or self.is_in_mis(v):
-            non_mis_node = u if self.is_in_mis(v) else v
-            self._decrease_count(non_mis_node)
+            mis_node, non_mis_node = (v, u) if self.is_in_mis(v) else (u, v)
+            if self._decrease_count(non_mis_node):
+                for w in self._graph[non_mis_node]:
+                    if w != mis_node:
+                        self._increase_count(w)
 
         self._graph.remove_edge(u, v)
 
     def _decrease_count(self, v):
+        assert(self._count[v] > 0)
         self._count[v] = self._count[v] - 1
         if self._count[v] == 0:
             self._mis.add(v)
+            return True
+        else:
+            return False
 
     def _increase_count(self, v):
         self._count[v] = self._count[v] + 1
