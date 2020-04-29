@@ -66,6 +66,12 @@ class TestTrivialMIS(unittest.TestCase):
     def test_remove_edges(self):
         _test_remove_edges(self, TrivialMIS)
 
+    def test_insert_nodes(self):
+        _test_insert_nodes(self, TrivialMIS)
+
+    def test_insert_edges(self):
+        _test_insert_edges(self, TrivialMIS)
+
 
 class TestSimpleMIS(unittest.TestCase):
 
@@ -80,12 +86,24 @@ class TestSimpleMIS(unittest.TestCase):
     def test_remove_edges(self):
         _test_remove_edges(self, SimpleMIS)
 
+    def test_insert_nodes(self):
+        _test_insert_nodes(self, SimpleMIS)
+
+    def test_insert_edges(self):
+        _test_insert_edges(self, SimpleMIS)
+
 class TestImprovedIncrementalMIS(unittest.TestCase):
 
     def test_valid(self):
         g = nx.gnp_random_graph(20, 0.3, seed=1234)
         sm = SimpleMIS(g)
         self.assertTrue(sm.is_valid_mis())
+
+    def test_insert_nodes(self):
+        _test_insert_nodes(self, ImprovedIncrementalMIS)
+
+    def test_insert_edges(self):
+        _test_insert_edges(self, ImprovedIncrementalMIS)
 
 
 def _test_remove_nodes(test: unittest.TestCase, cls: Type[MISAlgorithm]):
@@ -102,7 +120,7 @@ def _test_remove_nodes(test: unittest.TestCase, cls: Type[MISAlgorithm]):
 
 
 def _test_remove_edges(test: unittest.TestCase, cls: Type[MISAlgorithm]):
-    g = nx.gnp_random_graph(5, 0.3, seed=42)
+    g = nx.gnp_random_graph(20, 0.3, seed=42)
     removal_order = np.random.RandomState(seed=42).permutation(g.edges)
     algo = cls(g)
 
@@ -117,3 +135,34 @@ def _test_remove_edges(test: unittest.TestCase, cls: Type[MISAlgorithm]):
         test.assertTrue(algo.is_valid_mis())
 
     # animate(*zip(*history))
+
+
+def _test_insert_edges(test: unittest.TestCase, cls: Type[MISAlgorithm]):
+    g = nx.gnp_random_graph(20, 0.3, seed=42)
+    insert_order = np.random.RandomState(seed=42).permutation(g.edges)
+
+    g.remove_edges_from(g.edges)
+
+    algo = cls(g)
+    for e in insert_order:
+        algo.insert_edge(*e)
+        # test.assertTrue(algo.is_valid_mis())
+        if not algo.is_valid_mis():
+            mis(algo)
+            pass
+
+
+def _test_insert_nodes(test: unittest.TestCase, cls: Type[MISAlgorithm]):
+    g = nx.gnp_random_graph(20, 0.3, seed=42)
+    insert_order = np.random.RandomState(seed=42).permutation(g.nodes)
+
+    edges = dict()
+    for v in g.nodes:
+        # edges[v] = set(g[v])
+        edges[v] = {(v, n) for n in g[v]}
+    g.clear()
+
+    algo = cls(g)
+    for v in insert_order:
+        algo.insert_node(v, edges[v])
+        test.assertTrue(algo.is_valid_mis())
