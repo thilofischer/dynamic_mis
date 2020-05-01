@@ -1,6 +1,6 @@
 import unittest
-from unittest.mock import MagicMock, patch
-import networkx as nx
+from unittest.mock import patch
+import networkx.algorithms.isomorphism as iso
 from typing import Type
 import numpy as np
 from algorithm import *
@@ -92,6 +92,7 @@ class TestSimpleMIS(unittest.TestCase):
     def test_insert_edges(self):
         _test_insert_edges(self, SimpleMIS)
 
+
 class TestImprovedIncrementalMIS(unittest.TestCase):
 
     def test_valid(self):
@@ -106,23 +107,45 @@ class TestImprovedIncrementalMIS(unittest.TestCase):
         _test_insert_edges(self, ImprovedIncrementalMIS)
 
 
-def _test_remove_nodes(test: unittest.TestCase, cls: Type[MISAlgorithm]):
+class TestImprovedDynamicMIS(unittest.TestCase):
+
+    def test_valid(self):
+        g = nx.gnp_random_graph(20, 0.3, seed=1234)
+        sm = ImprovedDynamicMIS(g, delta_c=3)
+        self.assertTrue(sm.is_valid_mis())
+
+    def test_remove_nodes(self):
+        _test_remove_nodes(self, ImprovedDynamicMIS, delta_c=3)
+
+    def test_remove_edges(self):
+        _test_remove_edges(self, ImprovedDynamicMIS, delta_c=3)
+
+    def test_insert_nodes(self):
+        _test_insert_nodes(self, ImprovedDynamicMIS, delta_c=3)
+
+    def test_insert_edges(self):
+        _test_insert_edges(self, ImprovedDynamicMIS, delta_c=3)
+
+
+def _test_remove_nodes(test: unittest.TestCase, cls: Type[MISAlgorithm], **kwargs):
     g = nx.gnp_random_graph(20, 0.3, seed=42)
     removal_order = np.random.RandomState(seed=42).permutation(g.nodes)
-    algo = cls(g)
+    algo = cls(g, **kwargs)
 
     test.assertTrue(algo.is_valid_mis())
 
     for n in removal_order:
         algo.remove_node(n)
+        # algo.sanity_check()
         test.assertFalse(n in g.nodes)
-        test.assertTrue(algo.is_valid_mis())
+        valid = algo.is_valid_mis()
+        test.assertTrue(valid)
 
 
-def _test_remove_edges(test: unittest.TestCase, cls: Type[MISAlgorithm]):
+def _test_remove_edges(test: unittest.TestCase, cls: Type[MISAlgorithm], **kwargs):
     g = nx.gnp_random_graph(20, 0.3, seed=42)
     removal_order = np.random.RandomState(seed=42).permutation(g.edges)
-    algo = cls(g)
+    algo = cls(g, **kwargs)
 
     history = []
 
@@ -134,35 +157,35 @@ def _test_remove_edges(test: unittest.TestCase, cls: Type[MISAlgorithm]):
         test.assertFalse(e in g.edges)
         test.assertTrue(algo.is_valid_mis())
 
-    # animate(*zip(*history))
 
-
-def _test_insert_edges(test: unittest.TestCase, cls: Type[MISAlgorithm]):
+def _test_insert_edges(test: unittest.TestCase, cls: Type[MISAlgorithm], **kwargs):
     g = nx.gnp_random_graph(20, 0.3, seed=42)
+    g_original = g.copy()
     insert_order = np.random.RandomState(seed=42).permutation(g.edges)
 
     g.remove_edges_from(g.edges)
 
-    algo = cls(g)
+    algo = cls(g, **kwargs)
     for e in insert_order:
         algo.insert_edge(*e)
-        # test.assertTrue(algo.is_valid_mis())
-        if not algo.is_valid_mis():
-            mis(algo)
-            pass
+        test.assertTrue(algo.is_valid_mis())
+
+    test.assertTrue(iso.is_isomorphic(g, g_original))
 
 
-def _test_insert_nodes(test: unittest.TestCase, cls: Type[MISAlgorithm]):
+def _test_insert_nodes(test: unittest.TestCase, cls: Type[MISAlgorithm], **kwargs):
     g = nx.gnp_random_graph(20, 0.3, seed=42)
+    g_original = g.copy()
     insert_order = np.random.RandomState(seed=42).permutation(g.nodes)
 
     edges = dict()
     for v in g.nodes:
-        # edges[v] = set(g[v])
         edges[v] = {(v, n) for n in g[v]}
     g.clear()
 
-    algo = cls(g)
+    algo = cls(g, **kwargs)
     for v in insert_order:
         algo.insert_node(v, edges[v])
         test.assertTrue(algo.is_valid_mis())
+
+    test.assertTrue(iso.is_isomorphic(g, g_original))

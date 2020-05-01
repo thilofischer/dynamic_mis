@@ -9,6 +9,7 @@ node_color_out = "#82aaff"
 
 
 def mis(algo: algorithm.MISAlgorithm):
+
     g = algo.graph()
     nodes = g.nodes
 
