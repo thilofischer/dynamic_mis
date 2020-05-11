@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from algorithm import *
 import numpy.random as npr
+import networkx as nx
 
 node_color_in = 'orangered'
 node_color_out = 'royalblue'
@@ -13,7 +13,7 @@ class History:
         self._edges = []
         self._mis = []
 
-    def append(self, algo: MISAlgorithm):
+    def append(self, algo):
         g = algo.graph()
         self._nodes.append(set(g.nodes))
         self._edges.append(set(g.edges))
@@ -66,7 +66,7 @@ class Update:
         self._action = action
         self._value = value
 
-    def perform_on(self, algo: MISAlgorithm, history=None):
+    def perform_on(self, algo, history=None):
         if self._action == Update.NODE_INSERT:
             algo.insert_node(*self._value)
         elif self._action == Update.NODE_REMOVE:
@@ -85,7 +85,7 @@ class Update:
         return str(self._action) + " " + str(self._value)
 
 
-def image(algo: MISAlgorithm):
+def image(algo):
     g = algo.graph()
     nodes = g.nodes
 
@@ -97,7 +97,7 @@ def image(algo: MISAlgorithm):
     nx.draw_networkx(g, node_color=colors)
 
 
-def _sample_animation():
+def _sample_animation(cls):
     rnd = npr.RandomState(seed=78)
     hist = History()
 
@@ -105,7 +105,7 @@ def _sample_animation():
     initial_nodes = rnd.choice(source.nodes, size=5)
     initial = nx.Graph(source.subgraph(initial_nodes))
 
-    algo = SimpleMIS(initial)
+    algo = cls(initial)
     hist.append(algo)
 
     for _ in range(3):
@@ -177,6 +177,15 @@ def random_edge(rnd: npr.RandomState, graph: nx.Graph):
         return edges[i]
     else:
         raise ValueError('Graph does not contain any edges')
+
+
+def filtered_edge_insert(g: nx.Graph, edges):
+    # check that node is already in graph: else networkx will create that node and we don't want that
+    def both_nodes_exist(e):
+        return g.has_node(e[0]) and g.has_node(e[1])
+
+    edges = filter(both_nodes_exist, edges)
+    g.add_edges_from(edges)
 
 
 if __name__ == '__main__':

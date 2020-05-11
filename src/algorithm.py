@@ -4,7 +4,7 @@
 from abc import abstractmethod
 from collections import defaultdict
 import networkx as nx
-import functools
+from utility import filtered_edge_insert
 
 
 class Algorithm:
@@ -93,8 +93,7 @@ class TrivialMIS(MISAlgorithm):
 
     def insert_node(self, v, edges=[]):
         self._graph.add_node(v)
-        # FIXME: filter edges so nodes don't get created as a byproduct
-        self._graph.add_edges_from(edges)
+        filtered_edge_insert(self._graph, edges)
         self._compute()
 
     def remove_node(self, v):
@@ -111,9 +110,14 @@ class TrivialMIS(MISAlgorithm):
 
 class SimpleMIS(MISAlgorithm):
 
-    def __init__(self, graph):
+    def __init__(self, graph, count=None):
         super(SimpleMIS, self).__init__(graph)
-        self._count = defaultdict(lambda: 0)
+
+        if count is None:
+            self._count = defaultdict(lambda: 0)
+        else:
+            self._count = count
+
         tmis = TrivialMIS(self._graph)
         self._mis = tmis.get_mis()
 
@@ -123,21 +127,18 @@ class SimpleMIS(MISAlgorithm):
             elif tmis.is_in_mis(v):
                 self._increase_count(u)
 
-    def insert_node(self, v, edges=[]):
-        # reset count to protect against re-insertion bugs
-        self._count[v] = 0
+    def insert_node(self, v, edges=[], count=None):
         self._graph.add_node(v)
 
-        # check that node is already in graph: else networkx will create that node and we don't want that
-        def both_nodes_exist(e):
-            return self._graph.has_node(e[0]) and self._graph.has_node(e[1])
+        filtered_edge_insert(self._graph, edges)
 
-        edges = filter(both_nodes_exist, edges)
-        self._graph.add_edges_from(edges)
-
-        for n in self._graph[v]:
-            if self.is_in_mis(n):
-                self._increase_count(v)
+        if count is None:
+            self._count[v] = 0
+            for n in self._graph[v]:
+                if self.is_in_mis(n):
+                    self._increase_count(v)
+        else:
+            self._count[v] = count
 
         if self._count[v] == 0:
             self._mis.add(v)
@@ -222,96 +223,224 @@ class ImprovedIncrementalMIS(SimpleMIS):
 
 class ImprovedDynamicMIS(MISAlgorithm):
 
-    def __init__(self, graph: nx.Graph, delta_c: int):
+    def __init__(self, graph):
         super(ImprovedDynamicMIS, self).__init__(graph)
-        self._delta_c = delta_c
-        light_nodes = {v for (v, deg) in graph.degree if deg < self._delta_c}
-
-        self._light_subgraph = nx.Graph(graph.subgraph(light_nodes))
-        self._light_algo = SimpleMIS(self._light_subgraph)
-
+        self._light_count = dict()
         self._heavy_mis = set()
+        self._light_mis = set()
+        self._delta_c = 0
+        self._m_c = 0
+        self.new_phase()
+
+    def new_phase(self):
+        self._m_c = len(self._graph.edges)
+        self._delta_c = self._m_c ** (2/3)
+
+        # Initialise light node mis via Trivial Algo
+        self._light_mis = TrivialMIS(self._graph, candidate_filter=self._is_light).get_mis()
+
+        self._light_count = dict()
+        for v in self._graph.nodes:
+            self._light_count[v] = 0
+
+        for u, v in self._graph.edges:
+            if u in self._light_mis or v in self._light_mis:
+                non_mis_node = u if v in self._light_mis else v
+                self._light_count[non_mis_node] += 1
+
+        assert self.is_valid_light_mis()
+        assert self.is_valid_light_count()
+
         self._compute_heavy_mis()
 
-    def insert_edge(self, u, v):
-        made_heavy = False
-        for n in [u, v]:
-            if self._graph.degree[n] == self._delta_c - 1:
-                self._light_algo.remove_node(n)
-                made_heavy |= True
+    def check_new_phase(self):
+        m = len(self._graph.edges)
+        if m <= self._m_c / 2 or m >= self._m_c * 2:
+            self.new_phase()
+            return True
+        return False
 
-        if not made_heavy and u in self._light_subgraph and v in self._light_subgraph:
-            self._light_algo.insert_edge(u, v)
+    def insert_node(self, v, edges):
+        self._graph.add_node(v)
+        filtered_edge_insert(self._graph, edges)
+        self._light_count[v] = 0
 
-        self._graph.add_edge(u, v)
-        self._compute_heavy_mis()
+        if self.check_new_phase():
+            return
 
-    def remove_edge(self, u, v):
-        if u in self._light_subgraph and v in self._light_subgraph:
-            self._light_algo.remove_edge(u, v)
+        for w in self._graph[v]:
+            if self._became_heavy(w) and w in self._light_mis:
+                self._remove_from_light_mis(w)
+                old_neighbors = set(self._graph[w])
+                old_neighbors.remove(v)
+                self._decrease_light_count(old_neighbors)
+            # this does not work because decrease light count might already have incremented for a new light mis node
+            # elif w in self._light_mis:
+            #     self._light_count[v] += 1
 
-        self._graph.remove_edge(u, v)
-        self._check_became_light([u, v])
+        # Instead do the same loop here again where the light mis does not change during iteration
+        self._light_count[v] = 0
+        for w in self._graph[v]:
+            if w in self._light_mis:
+                self._light_count[v] += 1
+
+        if self._is_light(v) and self._light_count[v] == 0:
+            self._insert_into_light_mis(v)
+
         self._compute_heavy_mis()
 
     def remove_node(self, v):
-        if v in self._light_subgraph:
-            self._light_algo.remove_node(v)
-
         neighbors = set(self._graph[v])
         self._graph.remove_node(v)
-        self._check_became_light(neighbors)
-        self._compute_heavy_mis()
+        del self._light_count[v]
 
-    def insert_node(self, v, edges=[]):
-        self._graph.add_node(v)
+        if self.check_new_phase():
+            return
 
-        # check that both nodes are already in graph: else networkx will create that node and we don't want that
-        # needs to be done first so the len(edges) value is correct to classify the node as light/heavy
-        def both_nodes_exist(e):
-            return self._graph.has_node(e[0]) and self._graph.has_node(e[1])
-        edges = list(filter(both_nodes_exist, edges))
-        self._graph.add_edges_from(edges)
+        if v in self._light_mis:
+            self._remove_from_light_mis(v)
+            self._decrease_light_count(neighbors)
 
-        if len(edges) < self._delta_c:
-            self._light_algo.insert_node(v, edges)
-            self._check_became_heavy(set(self._light_subgraph[v]))
+        for w in neighbors:
+            # if self._became_light(w) and self._light_count[w] == 0:
+            if self._light_count[w] == 0 and w not in self._light_mis:
+                self._insert_into_light_mis(w)
 
         self._compute_heavy_mis()
 
-    def _check_became_light(self, nodes):
-        for n in nodes:
-            # Node just became light
-            if self._graph.degree(n) == self._delta_c - 1:
-                self._light_algo.insert_node(n, self._graph.edges(n))
+    def remove_edge(self, u, v):
+        self._graph.remove_edge(u, v)
 
-    def _check_became_heavy(self, nodes):
-        for n in nodes:
-            # Node just became heavy
-            if self._light_subgraph.degree(n) == self._delta_c:
-                self._light_algo.remove_node(n)
+        if self.check_new_phase():
+            return
+
+        if u in self._light_mis or v in self._light_mis:
+            non_mis_node = u if v in self._light_mis else v
+            self._decrease_light_count([non_mis_node])
+
+        for node in [u, v]:
+            if self._light_count[node] == 0 and node not in self._light_mis:
+                self._insert_into_light_mis(node)
+
+        valid = self.is_valid_mis()
+
+        self._compute_heavy_mis()
+
+    def insert_edge(self, u, v):
+
+        self._graph.add_edge(u, v)
+
+        if self.check_new_phase():
+            return
+
+        # Adding the edge could make a vertex heavy
+        for node, other in [(u, v), (v, u)]:
+            # if self._became_heavy(node) and node in self._light_mis:
+            if self._is_heavy(node) and node in self._light_mis:
+                self._remove_from_light_mis(node)
+                if other in self._light_mis:
+                    self._light_count[node] += 1
+                    assert self._light_count[node] == 1
+
+                # neighbor already sees new edge
+                old_neighbors = set(self._graph[node])
+                old_neighbors.remove(other)
+                self._decrease_light_count(old_neighbors)
+
+
+        # Still both can be in the light mis -> then remove u
+        if u in self._light_mis and v in self._light_mis:
+            # Do not decrease count of v
+            u_neighbors = set(self._graph[u])
+            u_neighbors.remove(v)
+            self._remove_from_light_mis(u)
+            self._light_count[u] += 1
+            assert self._light_count[u] == 1
+            # No need to decrease light count of v
+            self._decrease_light_count(u_neighbors)
+        elif u in self._light_mis or v in self._light_mis:
+            non_mis_node = u if v in self._light_mis else v
+            self._light_count[non_mis_node] += 1
+
+        self._compute_heavy_mis()
+
+    def _became_heavy(self, v):
+        # Node should be heavy but light with one neighbor less
+        deg = self._graph.degree[v]
+        return deg >= self._delta_c > deg - 1
+
+    def _became_light(self, v):
+        # Node should be light but heavy with one neighbor more
+        deg = self._graph.degree[v]
+        return deg + 1 >= self._delta_c > deg
+
+    # def _reevaluate_node(self, v):
+    #     if self._is_light(v) and self._light_count[v] == 0:
+    #         if v not in self._light_mis:
+    #             self._insert_into_light_mis(v)
+    #     elif v in self._light_mis:
+    #         if self._is_heavy(v) or self._light_count[v] > 0:
+    #             self._remove_from_light_mis(v)
+
+    def _remove_from_light_mis(self, v):
+        assert v in self._light_mis
+        self._light_mis.remove(v)
+
+    def _decrease_light_count(self, nodes):
+        for v in nodes:
+            assert self._light_count[v] > 0
+            self._light_count[v] -= 1
+            if self._light_count[v] == 0 and self._is_light(v):
+                self._insert_into_light_mis(v)
+
+    def _insert_into_light_mis(self, v):
+        assert self._is_light(v)
+        assert v not in self._light_mis
+
+        self._light_mis.add(v)
+        for w in self._graph[v]:
+            assert w not in self._light_mis
+            self._light_count[w] += 1
+
+    def _candidate_for_heavy_mis(self, v):
+        return self._is_heavy(v) and self._light_count[v] == 0
+
+    def _is_heavy(self, v):
+        return self._graph.degree[v] >= self._delta_c
+
+    def _is_light(self, v):
+        return not self._is_heavy(v)
+
+    def get_mis(self):
+        return set.union(self._light_mis, self._heavy_mis)
+
+    def is_in_mis(self, node):
+        return node in self._heavy_mis or node in self._light_mis
 
     def _compute_heavy_mis(self):
-        # allowed returns True if the heavy node can be put into the mis
-        def allowed(light_mis: set, graph: nx.Graph, node):
-            return light_mis.isdisjoint(graph[node])
+        self._heavy_mis = TrivialMIS(self._graph, candidate_filter=self._candidate_for_heavy_mis).get_mis()
 
-        cf = functools.partial(allowed, self._light_algo.get_mis(), self._graph)
-        self._heavy_mis = TrivialMIS(self._graph, candidate_filter=cf).get_mis()
+    def is_valid_mis(self):
+        assert self.is_valid_light_count()
+        return super(ImprovedDynamicMIS, self).is_valid_mis()
 
-    def _valid_node_partition(self):
+    def is_valid_light_mis(self):
+        assert self.is_valid_light_count()
         for v in self._graph.nodes:
-            if self._graph.degree[v] < self._delta_c:
-                if v not in self._light_subgraph:
+            if self._is_light(v) and self._light_count[v] == 0:
+                if v not in self._light_mis:
                     return False
         return True
 
-    def is_valid_mis(self):
-        valid_partition = self._valid_node_partition()
-        return valid_partition and super(ImprovedDynamicMIS, self).is_valid_mis()
+    def is_valid_light_count(self):
 
-    def is_in_mis(self, node):
-        return node in self._heavy_mis or self._light_algo.is_in_mis(node)
+        for v in self._graph.nodes:
+            sum = 0
+            for n in self._graph[v]:
+                if n in self._light_mis:
+                    sum += 1
 
-    def get_mis(self):
-        return set.union(self._heavy_mis, self._light_algo.get_mis())
+            if sum != self._light_count[v]:
+                return False
+        return True
+
