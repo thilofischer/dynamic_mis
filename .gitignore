@@ -2,4 +2,4 @@
 papers/
 src/*.pyc
 .idea
-src/__pycache__/
+dynamic_mis/__pycache__/

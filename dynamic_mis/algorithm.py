@@ -4,7 +4,7 @@
 from abc import abstractmethod
 from collections import defaultdict
 import networkx as nx
-from utility import filtered_edge_insert
+from .utility import filtered_edge_insert
 
 
 class Algorithm:
@@ -200,6 +200,9 @@ class ImprovedIncrementalMIS(SimpleMIS):
     def insert_edge(self, u, v):
         lower_deg, higher_deg = (u, v) if self._graph.degree(u) < self._graph.degree(v) else (v, u)
         super(ImprovedIncrementalMIS, self).insert_edge(lower_deg, higher_deg)
+
+    def insert_node(self, v, edges=[], count=None):
+        raise NotImplementedError
 
     def remove_node(self, v):
         raise NotImplementedError
@@ -419,3 +422,64 @@ class ImprovedDynamicMIS(MISAlgorithm):
                 return False
         return True
 
+
+class ImplicitMIS(MISAlgorithm):
+
+    def __init__(self, graph):
+        super(ImplicitMIS, self).__init__(graph)
+        self._m_c = 0
+
+        self._light_nodes = set()
+        self._almost_heavy_nodes = set()
+        self._heavy_nodes = set()
+
+        self._count = dict()
+        self._almost_heavy_count = dict()
+
+        self._independent_set = set()
+
+    def new_phase(self):
+        m = len(self._graph.edges)
+        new_m_c = m ** 0.5
+
+        if m < self._m_c:
+            # Lowering the boundary
+            pass
+
+        else:
+            # Raising the boundary
+            pass
+
+    def insert_node(self, v, edges=[]):
+        pass
+
+    def is_heavy(self, node):
+        return self._graph.degree[node] > self._m_c
+
+    def is_light(self, node):
+        return not self.is_heavy(node)
+
+    def insert_into_is(self, v):
+        assert v not in self._independent_set
+        self._independent_set.add(v)
+        for w in self._graph[v]:
+            if self.is_heavy(w):
+                self._count[w] += 1
+
+    def is_in_mis(self, node):
+        if node in self._independent_set:
+            return True
+        elif self.is_heavy(node) and self._count[node] == 0:
+            # add and inform neighbours
+            self.insert_into_is(node)
+
+        elif self.is_light(node):
+            for w in self._graph[node]:
+                if w in self._independent_set:
+                    return False
+
+            # Is only reached if no neighbor is in is
+            self.insert_into_is(node)
+
+        else:
+            return False
