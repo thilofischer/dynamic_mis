@@ -68,7 +68,6 @@ class TrivialMIS(MISAlgorithm):
         self._compute()
 
     def _compute(self):
-        # self._logger.adjusted(len(self._independent_set))
         self._mis.clear()
 
         if self._candidate_filter:
@@ -101,7 +100,6 @@ class TrivialMIS(MISAlgorithm):
         self._compute()
 
     def is_in_mis(self, node):
-        # self._logger.queried()
         return node in self._mis
 
     def get_mis(self):
@@ -150,10 +148,7 @@ class SimpleMIS(MISAlgorithm):
         if self.is_in_mis(v):
             self._mis.remove(v)
             for w in self._graph[v]:
-                # FIXME: same loop
-                if self._decrease_count(w):
-                    for x in self._graph[w]:
-                        self._increase_count(x)
+                self._decrease_count(w)
 
         self._graph.remove_node(v)
 
@@ -164,34 +159,26 @@ class SimpleMIS(MISAlgorithm):
             self._increase_count(u)  # increase_count automatically removes u from _mis set
             for n in self._graph[u]:
                 if n != v:
-                    # FIXME: same loop
-                    if self._decrease_count(n):
-                        for x in self._graph[n]:
-                            self._increase_count(x)
+                    self._decrease_count(n)
 
         elif self.is_in_mis(u) != self.is_in_mis(v):
             non_mis_node = v if self.is_in_mis(u) else u
             self._increase_count(non_mis_node)
 
     def remove_edge(self, u, v):
-        if self.is_in_mis(u) or self.is_in_mis(v):
-            mis_node, non_mis_node = (v, u) if self.is_in_mis(v) else (u, v)
-            if self._decrease_count(non_mis_node):
-                for w in self._graph[non_mis_node]:
-                    # FIXME: is this if needed here? otherwise the loop can be generalized
-                    if w != mis_node:
-                        self._increase_count(w)
-
         self._graph.remove_edge(u, v)
+
+        if self.is_in_mis(u) or self.is_in_mis(v):
+            non_mis_node = u if self.is_in_mis(v) else v
+            self._decrease_count(non_mis_node)
 
     def _decrease_count(self, v):
         assert(self._count[v] > 0)
         self._count[v] = self._count[v] - 1
         if self._count[v] == 0:
             self._mis.add(v)
-            return True
-        else:
-            return False
+            for w in self._graph[v]:
+                self._increase_count(w)
 
     def _increase_count(self, v):
         self._count[v] = self._count[v] + 1
@@ -302,7 +289,6 @@ class ImprovedDynamicMIS(MISAlgorithm):
             self._decrease_light_count(neighbors)
 
         for w in neighbors:
-            # if self._became_light(w) and self._light_count[w] == 0:
             if self._light_count[w] == 0 and w not in self._light_mis:
                 self._insert_into_light_mis(w)
 
@@ -321,8 +307,6 @@ class ImprovedDynamicMIS(MISAlgorithm):
         for node in [u, v]:
             if self._light_count[node] == 0 and node not in self._light_mis:
                 self._insert_into_light_mis(node)
-
-        valid = self.is_valid_mis()
 
         self._compute_heavy_mis()
 
@@ -346,7 +330,6 @@ class ImprovedDynamicMIS(MISAlgorithm):
                 old_neighbors = set(self._graph[node])
                 old_neighbors.remove(other)
                 self._decrease_light_count(old_neighbors)
-
 
         # Still both can be in the light mis -> then remove u
         if u in self._light_mis and v in self._light_mis:
@@ -373,14 +356,6 @@ class ImprovedDynamicMIS(MISAlgorithm):
         # Node should be light but heavy with one neighbor more
         deg = self._graph.degree[v]
         return deg + 1 >= self._delta_c > deg
-
-    # def _reevaluate_node(self, v):
-    #     if self._is_light(v) and self._light_count[v] == 0:
-    #         if v not in self._light_mis:
-    #             self._insert_into_light_mis(v)
-    #     elif v in self._light_mis:
-    #         if self._is_heavy(v) or self._light_count[v] > 0:
-    #             self._remove_from_light_mis(v)
 
     def _remove_from_light_mis(self, v):
         assert v in self._light_mis
