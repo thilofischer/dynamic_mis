@@ -23,32 +23,34 @@ leads to faster solutions after an update.
 
 This project contains several different algorithms that compute a MIS on a dynamically changeable graph.
 
-* TrivialMIS:
+* **TrivialMIS**
 
     The intuitive approach to building a MIS. It completely recomputes the MIS after every update
     
-* SimpleMIS:
+* **SimpleMIS**
 
     Each vertex keeps a count of how many neighbors are in the MIS. Nodes are added/removed from the MIS based
     on this counter.
     
-* ImprovedIncrementalMIS:
+* **ImprovedIncrementalMIS**
     
     A small change to SimpleMIS, that only implements edge insertions. In the case that both nodes of the edge
     are in the MIS, the node with lower degree will be removed.
     
-* ImprovedDynamicMIS:
+* **ImprovedDynamicMIS**
 
     A fully dynamic algorithm, that classifies nodes as either heavy or light based on their degree and performs
     different operations accordingly to achieve lower amortized costs.
     
-* ImplicitMIS:
+* **ImplicitMIS**
 
     In a relaxed model we need not maintain an explicit version of the MIS. Instead this algorithms only saves an 
     independent set. If a node not in this set is part of the MIS is decided lazily.
 
 <!-- Requirements -->
 ## Requirements
+
+The code was tested using Python 3.8.2.
 
 The requirements are listed in *requirements.txt*.
 
@@ -65,14 +67,16 @@ To visualise and animate the graphs, matplotlib is used.
 
 The code can be imported as follows:
 
-`import dynamic_mis.algorithm as dma`
+```
+import dynamic_mis as dm
+```
 
 The implemented algorithms all share a common interface.
 To create a new instance of an algorithm on a graph call
 
 ```
 graph = *your networkx graph*
-algo = dma.TrivialMIS(graph)
+algo = dm.TrivialMIS(graph)
 ```
 
 where graph is a *networkx* graph.
@@ -81,8 +85,8 @@ Information about the maximal independet set is exposed via
 two member functions:
 
 ```
-    algo.is_in_mis(node) # Boolean
-    mis = algo.get_mis() # set object
+algo.is_in_mis(node) # Boolean
+mis = algo.get_mis() # set object
 ```
 
 To perform updates to the graph one of these four functions can be used:
