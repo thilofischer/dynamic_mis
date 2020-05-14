@@ -12,6 +12,8 @@
 
 \newcommand{\trivial}{$\mathcal{A}_T$}
 \newcommand{\simple}{$\mathcal{A}_S$}
+\newcommand{\M}{$\mathcal{M}$}
+\newcommand{\OD}{$\mathcal{O}(\Delta)$}
 
 \title[ShortTitle]{Dynamic Maximal Independent Sets}
 \subtitle{Presentation 1}
@@ -39,9 +41,8 @@
 
   % \pause
 
-  \begin{definition}{Maximal Independent Set (MIS)}
-  \\
-    $M$ is maximal if $\nexists \  IS \ M': M \subsetneq M'$
+  \begin{definition}
+    \M\ is maximal if: $\nexists \  IS \ \mathcal{M'}: \mathcal{M} \subsetneq \mathcal{M'}$
   \end{definition}
 
 \end{frame}
@@ -74,13 +75,57 @@
   \end{itemize} 
 \end{frame}
 
-\section{Amortized Complexity}
-\begin{frame}
+% \section{Types of updates}
+\begin{frame}{Types of updates}
+  \begin{itemize}
+    \item Node removal
+    \begin{itemize}
+      \item 1 node might leave \M
+      \item up to $\Delta$ might enter \M 
+    \end{itemize}
+
+    \medskip
+    \item Node insertion 
+    \begin{itemize}
+      \item 1 node might enter \M
+    \end{itemize}
+    
+    \medskip
+    \item Edge removal
+    \begin{itemize}
+      \item 1 node might enter \M
+    \end{itemize}
+
+    \medskip
+    \item Edge insertion
+    \begin{itemize}
+      \item 1 node might leave \M
+      \item up to $\Delta$ might enter \M 
+    \end{itemize}
+  \end{itemize}
   
 \end{frame}
 
+% \section{Amortized Complexity}
+% \begin{frame} 
+% \end{frame}
+
 \section{Simple Dynamic Algorithm}
 \begin{frame}{Simple Dynamic Algorithm \simple}
+  \begin{itemize}
+    \item Every vertex has counter of neighbors in \M
+    \item If counter == 0: vertex can be added 
+    \pause
+    \medskip
+    \item Every node joining/leaving \M\ has to inform $\mathcal{O}(\Delta)$ neighbors
+    \medskip
+    \item amortized time per update: \OD
+    \bigskip
+    \item \OD\ removals costing \OD\ each
+    \\
+    \pause
+    $\rightarrow$ Assign cost of removal to insertion
+  \end{itemize}
   
 \end{frame}
 
@@ -88,29 +133,41 @@
 \begin{frame}{Improved Dynamic Algorithm}
   \begin{itemize}
     \item Idea: differentiate between \textbf{heavy} and \textbf{light} vertices
-    \item $v$ is \textbf{light} if: $deg(v) < m_c$
+    \item $v$ is \textbf{light} if: $deg(v) < \Delta_C$
   \end{itemize}
   \begin{enumerate}
     \pause
     \bigskip
-    \item \simple for light vertices
+    \item \simple\ for light vertices
     \medskip
-    \item \trivial for heavy vertices
+    \item \trivial\ for heavy vertices
     \begin{itemize}
-      \item considering the IS on the light nodes
+      \item respect the IS on the light nodes!
     \end{itemize}
   \end{enumerate} 
 \end{frame}
 
 \begin{frame}{Improved Dynamic Algorithm}
   \begin{itemize}
-    \item $m_c := m^{2/3}$
-    \item New phase if $m \geq 2m_c \lor m \leq m_c/2$
+    \item $\Delta_C := m^{2/3}$
+    \\
+    $\rightarrow$ New phase if $m \geq 2m_c \lor m \leq m_c/2$
+
+    \bigskip
+    \item \simple\ takes $\mathcal{O}(m^{2/3})$
+
+    % FIXME: is this correct?
+    \item \trivial\ takes $\mathcal{O}(m_H) = \mathcal{O}((\frac{m}{\Delta_C})^2) = \mathcal{O}(m^{2/3})$
+
+    \pause
+    \bigskip
+    \item overall amortized complexity: $\mathcal{O}(min\{\Delta, m^{2/3}\})$
+    \\
+    $\rightarrow$ all nodes could be light
   \end{itemize}
 \end{frame}
 
-\section{Conclusion}
-\begin{frame}
+\begin{frame}{Conclusion}
   \begin{itemize}
     \item Code and slides at: \\
           \href{https://www.github.com/thilofischer/dynamic_mis}{github.com/thilofischer/dynamic\_mis}
