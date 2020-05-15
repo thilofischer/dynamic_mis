@@ -427,42 +427,127 @@ class ImplicitMIS(MISAlgorithm):
 
     def __init__(self, graph):
         super(ImplicitMIS, self).__init__(graph)
-        self._m_c = 0
-
-        self._light_nodes = set()
-        self._almost_heavy_nodes = set()
-        self._heavy_nodes = set()
-
-        self._count = dict()
+        self._m_c = len(self._graph.edges)
         self._almost_heavy_count = dict()
-
         self._independent_set = set()
 
+        self._count = dict()
+        for v in self._graph.nodes:
+            if self.is_heavy(v):
+                self._count[v] = self._calculate_count(v)
+
     def new_phase(self):
+        if self._m_c/2.0 < len(self._graph.edges) < 2.0*self._m_c:
+            return False
+
         m = len(self._graph.edges)
-        new_m_c = m ** 0.5
 
-        if m < self._m_c:
+        # Zero edges is a special case
+        if m == self._m_c == 0:
+            return False
+
+        new_threshold = m ** 0.5
+
+        if m <= self._m_c/2.0:
             # Lowering the boundary
-            pass
+            # Have we calculated all counts?
+            assert all(v in self._almost_heavy_count for v in self._almost_heavy_nodes())
+            self._count = {**self._count, **self._almost_heavy_count}
 
-        else:
+        elif m >= 2*self._m_c:
             # Raising the boundary
-            pass
+            # Remove count from the now light nodes
+            for v in self._graph.nodes:
+                if self._graph.degree[v] < new_threshold and v in self._count:
+                    del self._count[v]
+        else:
+            raise ValueError
+
+        self._m_c = m
+        self._almost_heavy_count.clear()
+
+        return True
 
     def insert_node(self, v, edges=[]):
-        pass
+        raise NotImplementedError
+
+    def remove_node(self, v):
+        raise NotImplementedError
+
+    def insert_edge(self, u, v):
+        self.new_phase()
+        self.update_almost_heavy()
+        self._graph.add_edge(u, v)
+
+        # Do this first so that newly heavy nodes have a count
+        # And the new neighbors dont need different treatment for incrementing/decrementing their count
+        for node in [u, v]:
+            if self.is_heavy(node) and node not in self._count:
+                self._count[node] = self._calculate_count(node)
+
+        if u in self._independent_set and v in self._independent_set:
+            self._independent_set.remove(u)
+
+            for w in self._graph[u]:
+                if self.is_heavy(w):
+                    assert self._count[w] > 0
+                    self._count[w] -= 1
+
+        elif u in self._independent_set or v in self._independent_set:
+            mis_node, non_mis_node = (u, v) if u in self._independent_set else (v, u)
+            if self.is_heavy(non_mis_node):
+                self._count[non_mis_node] += 1
+
+    def remove_edge(self, u, v):
+        self.new_phase()
+        self.update_almost_heavy()
+        self._graph.remove_edge(u, v)
+
+        for node, other in [(u, v), (v, u)]:
+            if self.is_heavy(node) and other in self._independent_set:
+                self._count[node] -= 1
+            elif self.is_light(node) and node in self._count:
+                del self._count[node]
+
+    def update_almost_heavy(self):
+        if len(self._graph.edges) < self._m_c:
+            # Calculate the count of one node that will become heavy in the next boundary reduction
+            remaining = self._almost_heavy_nodes() - set(self._almost_heavy_count.keys())
+
+            if len(remaining) > 0:
+                node = remaining.pop()
+                self._almost_heavy_count[node] = self._calculate_count(node)
+        else:
+            # Clear calculations
+            self._almost_heavy_count.clear()
+            pass
 
     def is_heavy(self, node):
-        return self._graph.degree[node] > self._m_c
+        return self._graph.degree[node] > self._m_c ** 0.5
 
     def is_light(self, node):
         return not self.is_heavy(node)
 
-    def insert_into_is(self, v):
+    def is_almost_heavy(self, node):
+        return self.is_light(node) and self._graph.degree[node] >= self._m_c/2.0
+
+    def _almost_heavy_nodes(self):
+        f = filter(self.is_almost_heavy, self._graph.nodes)
+        return set(f)
+
+    def _calculate_count(self, node):
+        assert self.is_heavy(node)
+        s = 0
+        for w in self._graph[node]:
+            if w in self._independent_set:
+                s += 1
+        return s
+
+    def _insert_into_is(self, v):
         assert v not in self._independent_set
         self._independent_set.add(v)
         for w in self._graph[v]:
+            assert w not in self._independent_set
             if self.is_heavy(w):
                 self._count[w] += 1
 
@@ -471,7 +556,8 @@ class ImplicitMIS(MISAlgorithm):
             return True
         elif self.is_heavy(node) and self._count[node] == 0:
             # add and inform neighbours
-            self.insert_into_is(node)
+            self._insert_into_is(node)
+            return True
 
         elif self.is_light(node):
             for w in self._graph[node]:
@@ -479,7 +565,14 @@ class ImplicitMIS(MISAlgorithm):
                     return False
 
             # Is only reached if no neighbor is in is
-            self.insert_into_is(node)
+            self._insert_into_is(node)
+            return True
 
         else:
             return False
+
+    def get_mis(self):
+        for v in self._graph.nodes:
+            self.is_in_mis(v)
+
+        return set(self._independent_set)
