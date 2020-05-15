@@ -7,11 +7,13 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8x]{inputenc}
 \usepackage{hyperref}
+\usepackage{amsmath}
 
 \usepackage{graphicx}
 
 \newcommand{\trivial}{$\mathcal{A}_T$}
 \newcommand{\simple}{$\mathcal{A}_S$}
+\newcommand{\implicit}{$\mathcal{A}_I$}
 \newcommand{\M}{$\mathcal{M}$}
 \newcommand{\OD}{$\mathcal{O}(\Delta)$}
 
@@ -34,16 +36,24 @@
 \section{Introduction}
 \begin{frame}{Introduction}
 
-  \begin{definition}{Independent Set (IS)}
-  \\
-    $S \subset V: \forall u, v \in S: \{u, v\} \notin E$
-  \end{definition}
+  \begin{equation*} 
+    \begin{split} 
+      G &= (V, E) \\
+      n &:= \vert V \vert \\
+      m &:= \vert E \vert 
+    \end{split}
+  \end{equation*}
+
+  Independent Set (IS):
+  \begin{equation*}
+    S \subset V: \forall u, v \in S: \{u, v\} \notin E
+  \end{equation*}
 
   % \pause
-
-  \begin{definition}
-    \M\ is maximal if: $\nexists \  IS \ \mathcal{M'}: \mathcal{M} \subsetneq \mathcal{M'}$
-  \end{definition}
+  \M\ is \textbf{maximal} if (MIS):
+  \begin{equation*}
+     \nexists \  IS \ \mathcal{M'}: \mathcal{M} \subsetneq \mathcal{M'}
+  \end{equation*}
 
 \end{frame}
 
@@ -67,7 +77,7 @@
 \begin{frame}{Intuitive Approach \trivial}
   \begin{itemize}
     \item Iterate over all vertices
-    \item Check if vertex can be added
+    \item Check if vertex can be in MIS
     \item Complexity: $\mathcal{O}(m)$
     \pause
     \bigskip
@@ -79,29 +89,16 @@
 \begin{frame}{Types of updates}
   \begin{itemize}
     \item Node removal
-    \begin{itemize}
-      \item 1 node might leave \M
-      \item up to $\Delta$ might enter \M 
-    \end{itemize}
 
-    \medskip
     \item Node insertion 
-    \begin{itemize}
-      \item 1 node might enter \M
-    \end{itemize}
     
-    \medskip
     \item Edge removal
-    \begin{itemize}
-      \item 1 node might enter \M
-    \end{itemize}
 
-    \medskip
     \item Edge insertion
-    \begin{itemize}
-      \item 1 node might leave \M
-      \item up to $\Delta$ might enter \M 
-    \end{itemize}
+
+    \bigskip
+    \item 1 node might leave \M
+    \item up to $\Delta$ might enter \M 
   \end{itemize}
   
 \end{frame}
@@ -120,11 +117,12 @@
     \item Every node joining/leaving \M\ has to inform $\mathcal{O}(\Delta)$ neighbors
     \medskip
     \item amortized time per update: \OD
+    \pause
     \bigskip
-    \item \OD\ removals costing \OD\ each
+    \item Why? \OD\ insertions costing \OD\ each!
     \\
     \pause
-    $\rightarrow$ Assign cost of removal to insertion
+    $\rightarrow$ Assign cost of next insertion to removal
   \end{itemize}
   
 \end{frame}
@@ -132,6 +130,9 @@
 \section{Improved Dynamic Algorithm}
 \begin{frame}{Improved Dynamic Algorithm}
   \begin{itemize}
+    \item Complexity of \simple\ is determined by high degree nodes
+    \pause
+    \medskip
     \item Idea: differentiate between \textbf{heavy} and \textbf{light} vertices
     \item $v$ is \textbf{light} if: $deg(v) < \Delta_C$
   \end{itemize}
@@ -151,8 +152,10 @@
   \begin{itemize}
     \item $\Delta_C := m^{2/3}$
     \\
+    \pause
     $\rightarrow$ New phase if $m \geq 2m_c \lor m \leq m_c/2$
 
+    \pause
     \bigskip
     \item \simple\ takes $\mathcal{O}(m^{2/3})$
 
@@ -165,6 +168,47 @@
     \\
     $\rightarrow$ all nodes could be light
   \end{itemize}
+\end{frame}
+
+\section{Implicit MIS Algorithm}
+\begin{frame}{Relaxed Model}
+  \begin{itemize}
+    \item The previous algorithms:
+    \begin{itemize}
+      \item kept explicit copy of MIS
+      \item analyzed for amortized complexity
+    \end{itemize}
+    % Because worst case adjustment complexity is \Omega(n)
+    \pause
+    \bigskip
+    \item Relax requirement to keep explicit copy of MIS
+  \end{itemize} 
+\end{frame}
+
+\begin{frame}{Implicit MIS \implicit}
+  \begin{itemize}
+    \item Only maintain an IS not an MIS
+    \item Only process removals of nodes
+    \medskip
+    \pause
+    \item Check if $v \in$ \M\ when asked
+
+    \medskip
+    \item Worst case complexity $\mathcal{O}(min\{\Delta, \sqrt{m}\})$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Realisation of \implicit}
+  \begin{itemize}
+    \item Again \textbf{light} and \textbf{heavy} nodes
+    \item $\Delta_C := \sqrt{m}$
+    \pause
+    \medskip
+    \item Maintain count for heavy nodes only
+    \item Compute status for light nodes when queried
+
+  \end{itemize}
+  
 \end{frame}
 
 \begin{frame}{Conclusion}
