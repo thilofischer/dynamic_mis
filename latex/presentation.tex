@@ -17,7 +17,7 @@
 \newcommand{\M}{$\mathcal{M}$}
 \newcommand{\OD}{$\mathcal{O}(\Delta)$}
 
-\title[ShortTitle]{Dynamic Maximal Independent Sets}
+\title{Dynamic Maximal Independent Sets}
 \subtitle{Presentation 1}
 \author{Thilo L. Fischer}
 % \institute{}
@@ -40,13 +40,14 @@
     \begin{split} 
       G &= (V, E) \\
       n &:= \vert V \vert \\
-      m &:= \vert E \vert 
+      m &:= \vert E \vert \\
+      \Delta &:= max\{deg(v)\}
     \end{split}
   \end{equation*}
 
   Independent Set (IS):
   \begin{equation*}
-    S \subset V: \forall u, v \in S: \{u, v\} \notin E
+    \mathcal{M} \subset V:\ \forall u, v \in \mathcal{M}:\ \{u, v\} \notin E\
   \end{equation*}
 
   % \pause
@@ -89,11 +90,8 @@
 \begin{frame}{Types of updates}
   \begin{itemize}
     \item Node removal
-
     \item Node insertion 
-    
     \item Edge removal
-
     \item Edge insertion
 
     \bigskip
@@ -110,8 +108,8 @@
 \section{Simple Dynamic Algorithm}
 \begin{frame}{Simple Dynamic Algorithm \simple}
   \begin{itemize}
-    \item Every vertex has counter of neighbors in \M
-    \item If counter == 0: vertex can be added 
+    \item Every node has counter of neighbors in \M
+    \item If counter = 0: node can be added 
     \pause
     \medskip
     \item Every node joining/leaving \M\ has to inform $\mathcal{O}(\Delta)$ neighbors
