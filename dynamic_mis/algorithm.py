@@ -1,10 +1,16 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from abc import abstractmethod
 from collections import defaultdict
 import networkx as nx
-from dynamic_mis.utility import filtered_edge_insert
+
+
+def filtered_edge_insert(g: nx.Graph, edges):
+    # check that node is already in graph: else networkx will create that node and we don't want that
+    def both_nodes_exist(e):
+        return g.has_node(e[0]) and g.has_node(e[1])
+
+    edges = filter(both_nodes_exist, edges)
+    g.add_edges_from(edges)
+    return len(list(edges))
 
 
 class Algorithm:
@@ -60,6 +66,10 @@ class TrivialMIS(Algorithm):
         self._mis = TrivialMIS.compute(graph, candidate_filter)
 
     @staticmethod
+    def compute_networkx(graph):
+        return nx.maximal_independent_set(graph)
+
+    @staticmethod
     def compute(graph, candidate_filter=None):
         mis = set()
 
@@ -82,31 +92,6 @@ class TrivialMIS(Algorithm):
                         mis.add(v)
 
         return mis
-
-        # if self._candidate_filter:
-        #     # candidates = filter(self._candidate_filter, self._graph.nodes)
-        #     candidates = [v for v in self._graph.nodes if self._candidate_filter(v)]
-        # else:
-        #     candidates = self._graph.nodes
-        #
-        # for v in candidates:
-        #     can_be_added = True
-        #     for w in self._graph[v]:
-        #         if w in self._mis:
-        #             can_be_added = False
-        #     if can_be_added:
-        #         self._mis.add(v)
-        # if self._candidate_filter:
-        #     candidates = set(filter(self._candidate_filter, self._graph.nodes))
-        # else:
-        #     candidates = set(self._graph.nodes)
-        #
-        # while candidates:
-        #     v = candidates.pop()
-        #     self._mis.add(v)
-        #     for w in self._graph[v]:
-        #         if w in candidates:
-        #             candidates.remove(w)
 
     def insert_edge(self, u, v):
         if self._graph.has_edge(u, v):
@@ -185,15 +170,16 @@ class SimpleMIS(Algorithm):
             return
 
         self._graph.add_edge(u, v)
-        if self.is_in_mis(u) and self.is_in_mis(v):
+        if u in self._mis and v in self._mis:
             self._increase_count(u)  # increase_count automatically removes u from mis set
             for n in self._graph[u]:
                 if n != v:
                     self._decrease_count(n)
 
-        elif self.is_in_mis(u) != self.is_in_mis(v):
-            non_mis_node = v if self.is_in_mis(u) else u
+        elif (u in self._mis) != (v in self._mis):
+            non_mis_node = v if u in self._mis else v
             self._increase_count(non_mis_node)
+            # non_mis_node was not in mis -> we don't need to inform neighbors in this case
 
     def remove_edge(self, u, v):
         self._graph.remove_edge(u, v)
@@ -236,15 +222,15 @@ class ImprovedIncrementalMIS(SimpleMIS):
             return
 
         self._graph.add_edge(u, v)
-        if self.is_in_mis(u) and self.is_in_mis(v):
+        if u in self._mis and v in self._mis:
             lower_deg, higher_deg = (u, v) if self._graph.degree[u] < self._graph.degree[v] else (v, u)
             self._increase_count(lower_deg)  # increase_count automatically removes u from mis set
             for n in self._graph[lower_deg]:
                 if n != higher_deg:
                     self._decrease_count(n)
 
-        elif self.is_in_mis(u) != self.is_in_mis(v):
-            non_mis_node = v if self.is_in_mis(u) else u
+        elif (u in self._mis) != (v in self._mis):
+            non_mis_node = v if u in self._mis else u
             self._increase_count(non_mis_node)
 
     def insert_node(self, v, edges=[], count=None):
@@ -261,53 +247,44 @@ class ImprovedDynamicMIS(Algorithm):
 
     def __init__(self, graph):
         Algorithm.__init__(self, graph)
-        self._light_count = dict()
+        self._light_count = defaultdict(lambda: 0)
         self._heavy_mis = set()
         self._light_mis = set()
         self._delta_c = 0
         self._m_c = 0
+        self._edge_count = self._graph.number_of_edges()
         self.new_phase()
 
     def new_phase(self):
-        self._m_c = self._graph.number_of_edges()
-        self._delta_c = self._m_c ** (2/3)
+        if self._edge_count <= self._m_c / 2 or self._edge_count >= self._m_c * 2:
+            self._m_c = self._edge_count
+            self._delta_c = self._edge_count ** (2 / 3)
 
-        # Initialise light node mis via Trivial Algo
-        # self._light_mis = TrivialMIS(self._graph, candidate_filter=self._is_light).get_mis()
-        self._light_mis = TrivialMIS.compute(self._graph, candidate_filter=self._is_light)
+            # Initialise light node mis via Trivial Algo
+            self._light_mis = TrivialMIS.compute(self._graph, candidate_filter=self._is_light)
+            self._light_count = defaultdict(lambda: 0)
+            # self._light_count.clear() # New dict vs clear(): what is faster?
 
-        # self._light_count = dict()
-        # for v in self._graph.nodes:
-        #     self._light_count[v] = 0
-        self._light_count = defaultdict(lambda: 0)
+            for u in self._light_mis:
+                for v in self._graph[u]:
+                    self._light_count[v] += 1
 
-        # for u, v in self._graph.edges:
-        #     if u in self._light_mis or v in self._light_mis:
-        #         non_mis_node = u if v in self._light_mis else v
-        #         self._light_count[non_mis_node] += 1
-        for u in self._light_mis:
-            for v in self._graph[u]:
-                self._light_count[v] += 1
-
-        # These assertions slow down execution
-        # assert self.is_valid_light_mis()
-        # assert self.is_valid_light_count()
-
-        self._compute_heavy_mis()
-
-    def check_new_phase(self):
-        m = self._graph.number_of_edges()
-        if m <= self._m_c / 2 or m >= self._m_c * 2:
-            self.new_phase()
+            # These assertions slow down execution
+            # assert self.is_valid_light_mis()
+            # assert self.is_valid_light_count()
+            self._compute_heavy_mis()
             return True
+
         return False
 
     def insert_node(self, v, edges):
         self._graph.add_node(v)
-        filtered_edge_insert(self._graph, edges)
+        c = filtered_edge_insert(self._graph, edges)
+        self._edge_count += c
+
         # self._light_count[v] = 0
 
-        if self.check_new_phase():
+        if self.new_phase():
             return
 
         for w in self._graph[v]:
@@ -334,7 +311,9 @@ class ImprovedDynamicMIS(Algorithm):
         self._graph.remove_node(v)
         del self._light_count[v]
 
-        if self.check_new_phase():
+        self._edge_count -= len(neighbors)
+
+        if self.new_phase():
             return
 
         if v in self._light_mis:
@@ -349,8 +328,9 @@ class ImprovedDynamicMIS(Algorithm):
 
     def remove_edge(self, u, v):
         self._graph.remove_edge(u, v)
+        self._edge_count -= 1
 
-        if self.check_new_phase():
+        if self.new_phase():
             return
 
         if u in self._light_mis or v in self._light_mis:
@@ -370,8 +350,9 @@ class ImprovedDynamicMIS(Algorithm):
             return
 
         self._graph.add_edge(u, v)
+        self._edge_count += 1
 
-        if self.check_new_phase():
+        if self.new_phase():
             return
 
         for node, other in [(u, v), (v, u)]:
@@ -442,7 +423,9 @@ class ImprovedDynamicMIS(Algorithm):
         return node in self._heavy_mis or node in self._light_mis
 
     def _candidate_for_heavy_mis(self, v):
-        return self._is_heavy(v) and self._light_count[v] == 0
+        # return self._is_heavy(v) and self._light_count[v] == 0
+        # In line is heavy to save a func call
+        return self._graph.degree[v] >= self._delta_c and self._light_count[v] == 0
 
     def _compute_heavy_mis(self):
         self._heavy_mis = TrivialMIS.compute(self._graph, candidate_filter=self._candidate_for_heavy_mis)
@@ -479,6 +462,7 @@ class ImplicitMIS(Algorithm):
     def __init__(self, graph):
         super(ImplicitMIS, self).__init__(graph)
         self._m_c = self._graph.number_of_edges()
+        self._edge_count = self._m_c
         self._almost_heavy_count = dict()
         self._independent_set = set()
 
@@ -488,24 +472,21 @@ class ImplicitMIS(Algorithm):
                 self._count[v] = self._calculate_count(v)
 
     def new_phase(self):
-        m = self._graph.number_of_edges()
-
-        if self._m_c/2.0 < m < 2.0*self._m_c:
+        if self._m_c/2.0 < self._edge_count < 2.0*self._m_c:
             return False
 
         # Zero edges is a special case
-        if m == self._m_c == 0:
+        if self._edge_count == self._m_c == 0:
             return False
 
-        new_threshold = m ** 0.5
+        new_threshold = self._edge_count ** 0.5
 
-        if m <= self._m_c/2.0:
+        if self._edge_count <= self._m_c/2.0:
             # Lowering the boundary
             # Have we calculated all counts?
             assert all(v in self._almost_heavy_count for v in self._almost_heavy_nodes())
             self._count = {**self._count, **self._almost_heavy_count}
-
-        elif m >= 2*self._m_c:
+        elif self._edge_count >= 2*self._m_c:
             # Raising the boundary
             # Remove count from the now light nodes
             # Resize while iterating
@@ -518,8 +499,9 @@ class ImplicitMIS(Algorithm):
         else:
             raise ValueError
 
-        self._m_c = m
-        self._almost_heavy_count.clear()
+        self._m_c = self._edge_count
+        # self._almost_heavy_count.clear()
+        self._almost_heavy_count = dict()
 
         return True
 
@@ -536,6 +518,7 @@ class ImplicitMIS(Algorithm):
         self.new_phase()
         self.update_almost_heavy()
         self._graph.add_edge(u, v)
+        self._edge_count += 1
 
         # Do this first so that newly heavy nodes have a count
         # And the new neighbors dont need different treatment for incrementing/decrementing their count
@@ -544,11 +527,13 @@ class ImplicitMIS(Algorithm):
                 self._count[node] = self._calculate_count(node)
 
         if u in self._independent_set and v in self._independent_set:
-            self._independent_set.remove(u)
-
-            for w in self._graph[u]:
-                if self.is_heavy(w):
-                    # assert self._count[w] > 0
+            # The distinction between low high degree node is not made in the paper, but it should not hurt.
+            lower_deg, higher_deg = (u, v) if self._graph.degree[u] < self._graph.degree[v] else (v, u)
+            self._independent_set.remove(lower_deg)
+            for w in self._graph[lower_deg]:
+                # TODO: The test for w != higher_deg was not here previously, is it not necessary/wrong?
+                if self.is_heavy(w) and w != higher_deg:
+                    assert self._count[w] > 0
                     self._count[w] -= 1
 
         elif u in self._independent_set or v in self._independent_set:
@@ -560,6 +545,7 @@ class ImplicitMIS(Algorithm):
         self.new_phase()
         self.update_almost_heavy()
         self._graph.remove_edge(u, v)
+        self._edge_count -= 1
 
         for node, other in [(u, v), (v, u)]:
             if self.is_heavy(node) and other in self._independent_set:
@@ -568,7 +554,7 @@ class ImplicitMIS(Algorithm):
                 del self._count[node]
 
     def update_almost_heavy(self):
-        if self._graph.number_of_edges() < self._m_c:
+        if self._edge_count < self._m_c:
             # Calculate the count of one node that will become heavy in the next boundary reduction
             remaining = self._almost_heavy_nodes() - set(self._almost_heavy_count.keys())
 
@@ -577,7 +563,8 @@ class ImplicitMIS(Algorithm):
                 self._almost_heavy_count[node] = self._calculate_count(node)
         else:
             # Clear calculations
-            self._almost_heavy_count.clear()
+            # self._almost_heavy_count.clear()
+            self._almost_heavy_count = dict()
 
     def is_heavy(self, node):
         return self._graph.degree[node] > self._m_c ** 0.5
