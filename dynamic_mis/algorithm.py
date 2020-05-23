@@ -122,38 +122,33 @@ class TrivialMIS(Algorithm):
 
 class SimpleMIS(Algorithm):
 
-    def __init__(self, graph, count=None):
+    def __init__(self, graph):
         super(SimpleMIS, self).__init__(graph)
-
-        if count is None:
-            self._count = defaultdict(lambda: 0)
-        else:
-            self._count = count
-
+        self._count = defaultdict(lambda: 0)
         self._mis = TrivialMIS.compute(self._graph)
 
         for v in self._mis:
             for u in self._graph[v]:
-                self._increase_count(u)
+                self._count[u] += 1
 
-    def insert_node(self, v, edges=[], count=None):
+        # This assertion will fail if is_valid_mis is patched for a test case
+        # assert self.is_valid_mis()
+        assert self._valid_count()
+
+    def insert_node(self, v, edges=[]):
         self._graph.add_node(v)
-
         filtered_edge_insert(self._graph, edges)
 
-        if count is None:
-            self._count[v] = 0
-            for n in self._graph[v]:
-                if self.is_in_mis(n):
-                    self._increase_count(v)
-        else:
-            self._count[v] = count
+        self._count[v] = 0
+        for n in self._graph[v]:
+            if n in self._mis:
+                self._count[v] += 1
 
         if self._count[v] == 0:
             self._mis.add(v)
             for n in self._graph[v]:
-                assert(not self.is_in_mis(n))
-                self._increase_count(n)
+                # assert n not in self._mis
+                self._count[n] += 1
 
     def remove_node(self, v):
         if self.is_in_mis(v):
@@ -165,21 +160,28 @@ class SimpleMIS(Algorithm):
 
     def insert_edge(self, u, v):
         assert u in self._graph and v in self._graph
-
         if self._graph.has_edge(u, v):
             return
-
         self._graph.add_edge(u, v)
+
         if u in self._mis and v in self._mis:
-            self._increase_count(u)  # increase_count automatically removes u from mis set
+            assert self._count[u] == 0
+            self._count[u] = 1
+            self._mis.remove(u)
+
+            # First add one to v and then remove it.
+            # This saves us an if statement inside a loop
+            # self._count[v] = 1
             for n in self._graph[u]:
                 if n != v:
                     self._decrease_count(n)
 
         elif (u in self._mis) != (v in self._mis):
-            non_mis_node = v if u in self._mis else v
-            self._increase_count(non_mis_node)
+            non_mis_node = v if u in self._mis else u
+            self._count[non_mis_node] += 1
             # non_mis_node was not in mis -> we don't need to inform neighbors in this case
+
+        assert self._valid_count()
 
     def remove_edge(self, u, v):
         self._graph.remove_edge(u, v)
@@ -190,20 +192,31 @@ class SimpleMIS(Algorithm):
 
     def _decrease_count(self, v):
         assert(self._count[v] > 0)
-        self._count[v] = self._count[v] - 1
+        self._count[v] -= 1
+        # This and v not in self._mis is needed to optimize a loop in insert edge
+        # if self._count[v] == 0 and v not in self._mis:
         if self._count[v] == 0:
+            # assert all([w not in self._mis for w in self._graph[v]])
             self._mis.add(v)
             for w in self._graph[v]:
-                self._increase_count(w)
+                assert w not in self._mis
+                self._count[w] += 1
 
     def _increase_count(self, v):
-        self._count[v] = self._count[v] + 1
+        self._count[v] += 1
         if v in self._mis:
             self._mis.remove(v)
-        # not needed
-        #     return True
-        # else:
-        #     return False
+
+    def _valid_count(self):
+        for v in self._graph:
+            c = self._count[v]
+            s = 0
+            for n in self._graph[v]:
+                if n in self._mis:
+                    s += 1
+            if s != c:
+                return False
+        return True
 
     def is_in_mis(self, node):
         return node in self._mis
@@ -217,21 +230,30 @@ class ImprovedIncrementalMIS(SimpleMIS):
     # Calling the super class makes it slower than the direct implementation
     def insert_edge(self, u, v):
         assert u in self._graph and v in self._graph
-
         if self._graph.has_edge(u, v):
             return
-
         self._graph.add_edge(u, v)
+
         if u in self._mis and v in self._mis:
             lower_deg, higher_deg = (u, v) if self._graph.degree[u] < self._graph.degree[v] else (v, u)
-            self._increase_count(lower_deg)  # increase_count automatically removes u from mis set
+
+            assert self._count[lower_deg] == 0
+            self._count[lower_deg] = 1
+            self._mis.remove(lower_deg)
+
             for n in self._graph[lower_deg]:
                 if n != higher_deg:
                     self._decrease_count(n)
+            # self._increase_count(lower_deg)  # increase_count automatically removes u from mis set
+            # for n in self._graph[lower_deg]:
+            #     if n != higher_deg:
+            #         self._decrease_count(n)
 
         elif (u in self._mis) != (v in self._mis):
             non_mis_node = v if u in self._mis else u
-            self._increase_count(non_mis_node)
+            self._count[non_mis_node] += 1
+
+        assert self._valid_count()
 
     def insert_node(self, v, edges=[], count=None):
         raise NotImplementedError
