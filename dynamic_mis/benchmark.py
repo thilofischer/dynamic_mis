@@ -19,7 +19,7 @@ def nodes_from_file(dataset_file):
     return nodes
 
 
-def benchmark_edge_insertion(algo_cls, dataset_file, nodes, benchmark_name=""):
+def benchmark_edge_insertion(algo_cls, nodes, edges, benchmark_name=""):
     from timeit import default_timer as timer
 
     graph = nx.Graph()
@@ -30,8 +30,9 @@ def benchmark_edge_insertion(algo_cls, dataset_file, nodes, benchmark_name=""):
     start = timer()
 
     algo = algo_cls(graph)
-    for line in open(dataset_file):
-        e = edge_from_line(line)
+    # for line in open(dataset_file):
+    #     e = edge_from_line(line)
+    for e in edges:
         algo.insert_edge(*e)
         # assert algo.is_valid_mis()
 
@@ -44,38 +45,42 @@ def benchmark_edge_insertion(algo_cls, dataset_file, nodes, benchmark_name=""):
     print("Completed Benchmark {} in t={:.3f}".format(benchmark_name, t))
     return t, valid
 
+
 # In the final graph all nodes are considered light
 def wildbirds(data_dir):
     file = data_dir + 'aves-wildbird-network.edges'
     nodes = nodes_from_file(file)
-    benchmark_edge_insertion(TrivialMIS, file, nodes, 'Wildbirds Trivial')
-    benchmark_edge_insertion(SimpleMIS, file, nodes, 'Wildbirds Simple')
-    benchmark_edge_insertion(ImprovedIncrementalMIS, file, nodes, 'Wildbirds Improved Incremental')
-    benchmark_edge_insertion(ImprovedDynamicMIS, file, nodes, 'Wildbirds Improved Dynamic')
-    benchmark_edge_insertion(ImplicitMIS, file, nodes, 'Wildbirds Implicit')
+    edges = [edge_from_line(line) for line in open(file)]
+    benchmark_edge_insertion(TrivialMIS, nodes, edges, 'Wildbirds Trivial')
+    benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Wildbirds Simple')
+    benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Wildbirds Improved Incremental')
+    benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Wildbirds Improved Dynamic')
+    benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Wildbirds Implicit')
 
 
 def topology(data_dir):
     file = data_dir + 'topology/out.topology'
     nodes = nodes_from_file(file)
+    edges = [edge_from_line(line) for line in open(file)]
 
     # Takes a long time
-    # benchmark_edge_insertion(TrivialMIS, file, nodes, 'Topology Trivial')
-    benchmark_edge_insertion(SimpleMIS, file, nodes, 'Topology Simple')
-    benchmark_edge_insertion(ImprovedIncrementalMIS, file, nodes, 'Topology Improved Incremental')
-    benchmark_edge_insertion(ImprovedDynamicMIS, file, nodes, 'Topology Improved Dynamic')
-    benchmark_edge_insertion(ImplicitMIS, file, nodes, 'Topology Implicit')
+    # benchmark_edge_insertion(TrivialMIS, nodes, edges, 'Topology Trivial')
+    # benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Topology Simple')
+    # benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Topology Improved Incremental')
+    benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Topology Improved Dynamic')
+    # benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Topology Implicit')
 
 
 def facebook(data_dir):
     file = data_dir + 'facebook-wosn-links/out.facebook-wosn-links'
     nodes = nodes_from_file(file)
+    edges = [edge_from_line(line) for line in open(file)]
 
-    # benchmark_edge_insertion(TrivialMIS, file, nodes, 'Facebook Trival')
-    benchmark_edge_insertion(SimpleMIS, file, nodes, 'Facebook Simple')
-    benchmark_edge_insertion(ImprovedIncrementalMIS, file, nodes, 'Facebook Improved Incremental')
-    # benchmark_edge_insertion(ImprovedDynamicMIS, file, nodes, 'Facebook Improved Dynamic')
-    benchmark_edge_insertion(ImplicitMIS, file, nodes, 'Facebook Implicit')
+    # benchmark_edge_insertion(TrivialMIS, nodes, edges 'Facebook Trival')
+    benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Facebook Simple')
+    benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Facebook Improved Incremental')
+    # benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Facebook Improved Dynamic')
+    benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Facebook Implicit')
 
 
 if __name__ == '__main__':
@@ -85,8 +90,8 @@ if __name__ == '__main__':
     else:
         data_dir = '../data/'
 
-    # wildbirds(data_dir)
+    wildbirds(data_dir)
     # topology(data_dir)
-    facebook(data_dir)
+    # facebook(data_dir)
 
 
