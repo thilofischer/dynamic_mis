@@ -1,5 +1,6 @@
 from dynamic_mis.algorithm import *
 from dynamic_mis.utility import *
+import numpy.random as npr
 
 
 def edge_from_line(line):
@@ -25,7 +26,7 @@ def benchmark_edge_insertion(algo_cls, nodes, edges, benchmark_name=""):
     graph = nx.Graph()
     graph.add_nodes_from(nodes)
 
-    print('Starting Benchmark ' + benchmark_name)
+    print('Starting Insertion Benchmark ' + benchmark_name)
 
     start = timer()
 
@@ -44,6 +45,55 @@ def benchmark_edge_insertion(algo_cls, nodes, edges, benchmark_name=""):
     print("Result is: " + msg)
     print("Completed Benchmark {} in t={:.3f}".format(benchmark_name, t))
     return t, valid
+
+
+def benchmark_edge_deletion(algo_cls, graph, removals, benchmark_name=""):
+    from timeit import default_timer as timer
+
+    print('Starting Insertion Benchmark ' + benchmark_name)
+
+    start = timer()
+
+    algo = algo_cls(graph)
+    for e in removals:
+        algo.remove_edge(*e)
+
+    end = timer()
+    t = end - start
+
+    valid = algo.is_valid_mis()
+    msg = "[ OK ]" if valid else "[FAIL]"
+    print("Result is: " + msg)
+    print("Completed Benchmark {} in t={:.3f}".format(benchmark_name, t))
+    return t, valid
+
+
+def graph_from_file(file):
+    g = nx.Graph()
+    edges = []
+    for line in open(file):
+        edges.append(edge_from_line(line))
+
+    g.add_edges_from(edges)
+    return g, edges
+
+
+def brightkite(data_dir, seed=2, iterations=100000):
+    file = data_dir + 'loc-brightkite_edges/out.loc-brightkite_edges'
+    graph, edges = graph_from_file(file)
+
+    rnd = npr.RandomState(seed)
+    idx = rnd.choice(len(edges), size=iterations, replace=False)
+    removals = [edges[i] for i in idx]
+
+    g = graph.copy()
+    benchmark_edge_deletion(TrivialMIS, g, removals, "Brightkite Trivial")
+    g = graph.copy()
+    benchmark_edge_deletion(SimpleMIS, g, removals, "Brightkite Simple")
+    g = graph.copy()
+    benchmark_edge_deletion(ImprovedDynamicMIS, g, removals, "Brightkite Improved Dynamic")
+    g = graph.copy()
+    benchmark_edge_deletion(ImprovedDynamicMIS, g, removals, "Brightkite Implicit")
 
 
 # In the final graph all nodes are considered light
@@ -102,9 +152,12 @@ if __name__ == '__main__':
     else:
         data_dir = '../data/'
 
+    # Insertions
     # wildbirds(data_dir)
     # topology(data_dir)
     # facebook(data_dir)
-    youtube(data_dir)
+    # youtube(data_dir)
 
+    # Deletions
+    brightkite(data_dir)
 
