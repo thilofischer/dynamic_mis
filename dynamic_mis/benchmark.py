@@ -77,10 +77,22 @@ def facebook(data_dir):
     edges = [edge_from_line(line) for line in open(file)]
 
     # benchmark_edge_insertion(TrivialMIS, nodes, edges 'Facebook Trival')
-    benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Facebook Simple')
-    benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Facebook Improved Incremental')
+    # benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Facebook Simple')
+    # benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Facebook Improved Incremental')
     # benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Facebook Improved Dynamic')
     benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Facebook Implicit')
+
+
+def youtube(data_dir):
+    file = data_dir + 'youtube-u-growth/out.youtube-u-growth'
+    nodes = nodes_from_file(file)
+    edges = [edge_from_line(line) for line in open(file)]
+
+    # benchmark_edge_insertion(TrivialMIS, nodes, edges 'Youtube Trival')
+    benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Youtube Simple')
+    benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Youtube Improved Incremental')
+    # benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Youtube Improved Dynamic')
+    # benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Youtube Implicit')
 
 
 if __name__ == '__main__':
@@ -90,8 +102,9 @@ if __name__ == '__main__':
     else:
         data_dir = '../data/'
 
-    wildbirds(data_dir)
+    # wildbirds(data_dir)
     # topology(data_dir)
     # facebook(data_dir)
+    youtube(data_dir)
 
 
