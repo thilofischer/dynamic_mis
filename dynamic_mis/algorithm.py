@@ -557,8 +557,14 @@ class ImplicitMIS(Algorithm):
         if self._edge_count <= self._m_c/2.0:
             # Lowering the boundary
             # Have we calculated all counts?
+            for v in self._almost_heavy_nodes():
+                if v not in self._almost_heavy_count:
+                    self._almost_heavy_count[v] = self._calculate_count(v)
             assert all(v in self._almost_heavy_count for v in self._almost_heavy_nodes())
             self._count = {**self._count, **self._almost_heavy_count}
+            # for v in self._graph:
+            #     if self.is_heavy(v):
+            #         assert v in self._count
         elif self._edge_count >= 2*self._m_c:
             # Raising the boundary
             # Remove count from the now light nodes
@@ -575,7 +581,7 @@ class ImplicitMIS(Algorithm):
             raise ValueError
 
         self._m_c = self._edge_count
-        self._heavy_threshold = self._m_c ** 0.5
+        self._heavy_threshold = new_threshold
         self._almost_heavy_count.clear()
         # self._almost_heavy_count = dict()
         return True
@@ -626,13 +632,16 @@ class ImplicitMIS(Algorithm):
         for node, other in [(u, v), (v, u)]:
             if self.is_heavy(node) and other in self._independent_set:
                 self._count[node] -= 1
+            elif node in self._almost_heavy_count and other in self._independent_set:
+                self._almost_heavy_count[node] -= 1
             elif self.is_light(node) and node in self._count:
                 del self._count[node]
 
     def update_almost_heavy(self):
         if self._edge_count < self._m_c:
             # Calculate the count of one node that will become heavy in the next boundary reduction
-            remaining = self._almost_heavy_nodes() - set(self._almost_heavy_count.keys())
+            almost_heavy = self._almost_heavy_nodes()
+            remaining = almost_heavy - set(self._almost_heavy_count.keys())
 
             if len(remaining) > 0:
                 node = remaining.pop()
@@ -649,7 +658,7 @@ class ImplicitMIS(Algorithm):
         return self._graph.degree[node] <= self._heavy_threshold
 
     def is_almost_heavy(self, node):
-        return self._heavy_threshold >= self._graph.degree[node] >= self._m_c / 2.0
+        return self._heavy_threshold >= self._graph.degree[node] >= (self._m_c / 2.0) ** 0.5
 
     def _almost_heavy_nodes(self):
         f = filter(self.is_almost_heavy, self._graph.nodes)

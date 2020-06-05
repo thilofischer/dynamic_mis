@@ -137,8 +137,8 @@ class TestImplicitMIS(unittest.TestCase):
     def test_insert_edges(self):
         _test_insert_edges(self, ImplicitMIS)
 
-    # def test_remove_edges(self):
-    #     _test_remove_edges(self, ImplicitMIS)
+    def test_remove_edges(self):
+        _test_remove_edges(self, ImplicitMIS)
 
 
 def _test_remove_nodes(test: unittest.TestCase, cls: Type[Algorithm], **kwargs):
