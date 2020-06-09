@@ -1,6 +1,7 @@
 from dynamic_mis.algorithm import *
 from dynamic_mis.utility import *
 import numpy.random as npr
+import timeit
 
 
 def edge_from_line(line):
@@ -21,51 +22,50 @@ def nodes_from_file(dataset_file):
 
 
 def benchmark_edge_insertion(algo_cls, nodes, edges, benchmark_name=""):
-    from timeit import default_timer as timer
-
     graph = nx.Graph()
     graph.add_nodes_from(nodes)
 
+    def execute():
+        algo = algo_cls(graph)
+        for e in edges:
+            algo.insert_edge(*e)
+
     print('Starting Insertion Benchmark ' + benchmark_name)
-
-    start = timer()
-
-    algo = algo_cls(graph)
-    # for line in open(dataset_file):
-    #     e = edge_from_line(line)
-    for e in edges:
-        algo.insert_edge(*e)
-        # assert algo.is_valid_mis()
-
-    end = timer()
-    t = end - start
-
-    valid = algo.is_valid_mis()
-    msg = "[ OK ]" if valid else "[FAIL]"
-    print("Result is: " + msg)
+    t = timeit.timeit(execute, number=1)
     print("Completed Benchmark {} in t={:.3f}".format(benchmark_name, t))
-    return t, valid
+    return t
+
+
+def average_insertion_runs(algo_cls, nodes, edges, benchmark_name="", runs=5):
+    total = 0
+    for _ in range(runs):
+        total += benchmark_edge_insertion(algo_cls, nodes, edges, benchmark_name)
+    total /= runs
+    print("Average Benchmark {} in t={:.3f}\n".format(benchmark_name, total))
+    return total
 
 
 def benchmark_edge_deletion(algo_cls, graph, removals, benchmark_name=""):
-    from timeit import default_timer as timer
+
+    def execute():
+        algo = algo_cls(graph)
+        for e in removals:
+            algo.remove_edge(*e)
 
     print('Starting Insertion Benchmark ' + benchmark_name)
-
-    start = timer()
-
-    algo = algo_cls(graph)
-    for e in removals:
-        algo.remove_edge(*e)
-
-    end = timer()
-    t = end - start
-
-    valid = algo.is_valid_mis()
-    msg = "[ OK ]" if valid else "[FAIL]"
-    print("Result is: " + msg)
+    t = timeit.timeit(execute, number=1)
     print("Completed Benchmark {} in t={:.3f}".format(benchmark_name, t))
-    return t, valid
+    return t
+
+
+def average_deletion_runs(algo_cls, graph, removals, benchmark_name="", runs=5):
+    total = 0
+    for _ in range(runs):
+        g = graph.copy()
+        total += benchmark_edge_deletion(algo_cls, g, removals, benchmark_name)
+    total /= runs
+    print("Average Benchmark {} in t={:.3f}\n".format(benchmark_name, total))
+    return total
 
 
 def graph_from_file(file):
@@ -78,7 +78,7 @@ def graph_from_file(file):
     return g, edges
 
 
-def brightkite(data_dir, seed=2, iterations=100000):
+def brightkite(data_dir, seed=2, iterations=10000):
     file = data_dir + 'loc-brightkite_edges/out.loc-brightkite_edges'
     graph, edges = graph_from_file(file)
 
@@ -86,14 +86,11 @@ def brightkite(data_dir, seed=2, iterations=100000):
     idx = rnd.choice(len(edges), size=iterations, replace=False)
     removals = [edges[i] for i in idx]
 
-    g = graph.copy()
-    benchmark_edge_deletion(TrivialMIS, g, removals, "Brightkite Trivial")
-    g = graph.copy()
-    benchmark_edge_deletion(SimpleMIS, g, removals, "Brightkite Simple")
-    g = graph.copy()
-    benchmark_edge_deletion(ImprovedDynamicMIS, g, removals, "Brightkite Improved Dynamic")
-    g = graph.copy()
-    benchmark_edge_deletion(ImprovedDynamicMIS, g, removals, "Brightkite Implicit")
+    time_initialization_full(file)
+    # average_deletion_runs(TrivialMIS, graph, removals, "Brightkite Trivial")
+    average_deletion_runs(SimpleMIS, graph, removals, "Brightkite Simple")
+    average_deletion_runs(ImprovedDynamicMIS, graph, removals, "Brightkite Improved Dynamic")
+    average_deletion_runs(ImprovedDynamicMIS, graph, removals, "Brightkite Implicit")
 
 
 # In the final graph all nodes are considered light
@@ -101,11 +98,12 @@ def wildbirds(data_dir):
     file = data_dir + 'aves-wildbird-network.edges'
     nodes = nodes_from_file(file)
     edges = [edge_from_line(line) for line in open(file)]
-    benchmark_edge_insertion(TrivialMIS, nodes, edges, 'Wildbirds Trivial')
-    benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Wildbirds Simple')
-    benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Wildbirds Improved Incremental')
-    benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Wildbirds Improved Dynamic')
-    benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Wildbirds Implicit')
+    time_initialization_empty(file)
+    average_insertion_runs(TrivialMIS, nodes, edges, 'Wildbirds Trivial')
+    average_insertion_runs(SimpleMIS, nodes, edges, 'Wildbirds Simple')
+    average_insertion_runs(ImprovedIncrementalMIS, nodes, edges, 'Wildbirds Improved Incremental')
+    average_insertion_runs(ImprovedDynamicMIS, nodes, edges, 'Wildbirds Improved Dynamic')
+    average_insertion_runs(ImplicitMIS, nodes, edges, 'Wildbirds Implicit')
 
 
 def topology(data_dir):
@@ -113,12 +111,13 @@ def topology(data_dir):
     nodes = nodes_from_file(file)
     edges = [edge_from_line(line) for line in open(file)]
 
+    time_initialization_empty(file)
     # Takes a long time
-    # benchmark_edge_insertion(TrivialMIS, nodes, edges, 'Topology Trivial')
-    # benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Topology Simple')
-    # benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Topology Improved Incremental')
-    benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Topology Improved Dynamic')
-    # benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Topology Implicit')
+    # average_insertion_runs(TrivialMIS, nodes, edges, 'Topology Trivial')
+    average_insertion_runs(SimpleMIS, nodes, edges, 'Topology Simple')
+    average_insertion_runs(ImprovedIncrementalMIS, nodes, edges, 'Topology Improved Incremental')
+    average_insertion_runs(ImprovedDynamicMIS, nodes, edges, 'Topology Improved Dynamic')
+    average_insertion_runs(ImplicitMIS, nodes, edges, 'Topology Implicit')
 
 
 def facebook(data_dir):
@@ -126,11 +125,12 @@ def facebook(data_dir):
     nodes = nodes_from_file(file)
     edges = [edge_from_line(line) for line in open(file)]
 
-    # benchmark_edge_insertion(TrivialMIS, nodes, edges 'Facebook Trival')
-    # benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Facebook Simple')
-    # benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Facebook Improved Incremental')
-    # benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Facebook Improved Dynamic')
-    benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Facebook Implicit')
+    time_initialization_empty(file)
+    # average_insertion_runs(TrivialMIS, nodes, edges 'Facebook Trival')
+    average_insertion_runs(SimpleMIS, nodes, edges, 'Facebook Simple')
+    average_insertion_runs(ImprovedIncrementalMIS, nodes, edges, 'Facebook Improved Incremental')
+    # average_insertion_runs(ImprovedDynamicMIS, nodes, edges, 'Facebook Improved Dynamic')
+    average_insertion_runs(ImplicitMIS, nodes, edges, 'Facebook Implicit')
 
 
 def youtube(data_dir):
@@ -138,11 +138,30 @@ def youtube(data_dir):
     nodes = nodes_from_file(file)
     edges = [edge_from_line(line) for line in open(file)]
 
-    # benchmark_edge_insertion(TrivialMIS, nodes, edges 'Youtube Trival')
-    benchmark_edge_insertion(SimpleMIS, nodes, edges, 'Youtube Simple')
-    benchmark_edge_insertion(ImprovedIncrementalMIS, nodes, edges, 'Youtube Improved Incremental')
-    # benchmark_edge_insertion(ImprovedDynamicMIS, nodes, edges, 'Youtube Improved Dynamic')
-    # benchmark_edge_insertion(ImplicitMIS, nodes, edges, 'Youtube Implicit')
+    time_initialization_empty(file)
+    # average_insertion_runs(TrivialMIS, nodes, edges 'Youtube Trival')
+    average_insertion_runs(SimpleMIS, nodes, edges, 'Youtube Simple')
+    average_insertion_runs(ImprovedIncrementalMIS, nodes, edges, 'Youtube Improved Incremental')
+    # average_insertion_runs(ImprovedDynamicMIS, nodes, edges, 'Youtube Improved Dynamic')
+    average_insertion_runs(ImplicitMIS, nodes, edges, 'Youtube Implicit')
+
+
+def time_initialization_empty(file):
+    nodes = nodes_from_file(file)
+    graph = nx.Graph()
+    graph.add_nodes_from(nodes)
+    t = timeit.timeit(lambda: TrivialMIS.compute(graph), number=1)
+    print("Completed Empty Trivial in t={:.3f}".format(t))
+
+
+def time_initialization_full(file):
+    nodes = nodes_from_file(file)
+    graph = nx.Graph()
+    graph.add_nodes_from(nodes)
+    edges = [edge_from_line(line) for line in open(file)]
+    graph.add_edges_from(edges)
+    t = timeit.timeit(lambda: TrivialMIS.compute(graph), number=1)
+    print("Completed Empty Trivial in t={:.3f}".format(t))
 
 
 if __name__ == '__main__':
@@ -156,8 +175,10 @@ if __name__ == '__main__':
     # wildbirds(data_dir)
     # topology(data_dir)
     # facebook(data_dir)
-    # youtube(data_dir)
+    youtube(data_dir)
 
     # Deletions
-    brightkite(data_dir)
+    # brightkite(data_dir, iterations=1000)
+    # brightkite(data_dir, iterations=10000)
+    # brightkite(data_dir, iterations=100000)
 
