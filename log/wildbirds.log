@@ -1,0 +1,61 @@
+Completed Empty Trivial in t=0.000
+Starting Insertion Benchmark Wildbirds Trivial
+Completed Benchmark Wildbirds Trivial in t=1.310
+Starting Insertion Benchmark Wildbirds Trivial
+Completed Benchmark Wildbirds Trivial in t=1.287
+Starting Insertion Benchmark Wildbirds Trivial
+Completed Benchmark Wildbirds Trivial in t=1.259
+Starting Insertion Benchmark Wildbirds Trivial
+Completed Benchmark Wildbirds Trivial in t=1.287
+Starting Insertion Benchmark Wildbirds Trivial
+Completed Benchmark Wildbirds Trivial in t=1.265
+Average Benchmark Wildbirds Trivial in t=1.281
+
+Starting Insertion Benchmark Wildbirds Simple
+Completed Benchmark Wildbirds Simple in t=0.012
+Starting Insertion Benchmark Wildbirds Simple
+Completed Benchmark Wildbirds Simple in t=0.013
+Starting Insertion Benchmark Wildbirds Simple
+Completed Benchmark Wildbirds Simple in t=0.013
+Starting Insertion Benchmark Wildbirds Simple
+Completed Benchmark Wildbirds Simple in t=0.014
+Starting Insertion Benchmark Wildbirds Simple
+Completed Benchmark Wildbirds Simple in t=0.012
+Average Benchmark Wildbirds Simple in t=0.013
+
+Starting Insertion Benchmark Wildbirds Improved Incremental
+Completed Benchmark Wildbirds Improved Incremental in t=0.012
+Starting Insertion Benchmark Wildbirds Improved Incremental
+Completed Benchmark Wildbirds Improved Incremental in t=0.012
+Starting Insertion Benchmark Wildbirds Improved Incremental
+Completed Benchmark Wildbirds Improved Incremental in t=0.013
+Starting Insertion Benchmark Wildbirds Improved Incremental
+Completed Benchmark Wildbirds Improved Incremental in t=0.013
+Starting Insertion Benchmark Wildbirds Improved Incremental
+Completed Benchmark Wildbirds Improved Incremental in t=0.012
+Average Benchmark Wildbirds Improved Incremental in t=0.012
+
+Starting Insertion Benchmark Wildbirds Improved Dynamic
+Completed Benchmark Wildbirds Improved Dynamic in t=0.066
+Starting Insertion Benchmark Wildbirds Improved Dynamic
+Completed Benchmark Wildbirds Improved Dynamic in t=0.063
+Starting Insertion Benchmark Wildbirds Improved Dynamic
+Completed Benchmark Wildbirds Improved Dynamic in t=0.064
+Starting Insertion Benchmark Wildbirds Improved Dynamic
+Completed Benchmark Wildbirds Improved Dynamic in t=0.065
+Starting Insertion Benchmark Wildbirds Improved Dynamic
+Completed Benchmark Wildbirds Improved Dynamic in t=0.064
+Average Benchmark Wildbirds Improved Dynamic in t=0.064
+
+Starting Insertion Benchmark Wildbirds Implicit
+Completed Benchmark Wildbirds Implicit in t=0.020
+Starting Insertion Benchmark Wildbirds Implicit
+Completed Benchmark Wildbirds Implicit in t=0.020
+Starting Insertion Benchmark Wildbirds Implicit
+Completed Benchmark Wildbirds Implicit in t=0.020
+Starting Insertion Benchmark Wildbirds Implicit
+Completed Benchmark Wildbirds Implicit in t=0.020
+Starting Insertion Benchmark Wildbirds Implicit
+Completed Benchmark Wildbirds Implicit in t=0.019
+Average Benchmark Wildbirds Implicit in t=0.020
+

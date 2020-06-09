@@ -1,0 +1,38 @@
+# This took 20m 55s :/
+Completed Empty Trivial in t=2.996
+Starting Insertion Benchmark Youtube Simple
+Completed Benchmark Youtube Simple in t=61.524
+Starting Insertion Benchmark Youtube Simple
+Completed Benchmark Youtube Simple in t=76.864
+Starting Insertion Benchmark Youtube Simple
+Completed Benchmark Youtube Simple in t=70.562
+Starting Insertion Benchmark Youtube Simple
+Completed Benchmark Youtube Simple in t=61.943
+Starting Insertion Benchmark Youtube Simple
+Completed Benchmark Youtube Simple in t=64.396
+Average Benchmark Youtube Simple in t=67.058
+
+Starting Insertion Benchmark Youtube Improved Incremental
+Completed Benchmark Youtube Improved Incremental in t=63.238
+Starting Insertion Benchmark Youtube Improved Incremental
+Completed Benchmark Youtube Improved Incremental in t=62.471
+Starting Insertion Benchmark Youtube Improved Incremental
+Completed Benchmark Youtube Improved Incremental in t=61.087
+Starting Insertion Benchmark Youtube Improved Incremental
+Completed Benchmark Youtube Improved Incremental in t=58.460
+Starting Insertion Benchmark Youtube Improved Incremental
+Completed Benchmark Youtube Improved Incremental in t=58.221
+Average Benchmark Youtube Improved Incremental in t=60.695
+
+Starting Insertion Benchmark Youtube Implicit
+Completed Benchmark Youtube Implicit in t=84.847
+Starting Insertion Benchmark Youtube Implicit
+Completed Benchmark Youtube Implicit in t=96.836
+Starting Insertion Benchmark Youtube Implicit
+Completed Benchmark Youtube Implicit in t=105.321
+Starting Insertion Benchmark Youtube Implicit
+Completed Benchmark Youtube Implicit in t=91.886
+Starting Insertion Benchmark Youtube Implicit
+Completed Benchmark Youtube Implicit in t=98.550
+Average Benchmark Youtube Implicit in t=95.488
+

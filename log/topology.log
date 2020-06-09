@@ -1,0 +1,49 @@
+Completed Empty Trivial in t=0.030
+Starting Insertion Benchmark Topology Simple
+Completed Benchmark Topology Simple in t=0.431
+Starting Insertion Benchmark Topology Simple
+Completed Benchmark Topology Simple in t=0.423
+Starting Insertion Benchmark Topology Simple
+Completed Benchmark Topology Simple in t=0.428
+Starting Insertion Benchmark Topology Simple
+Completed Benchmark Topology Simple in t=0.439
+Starting Insertion Benchmark Topology Simple
+Completed Benchmark Topology Simple in t=0.431
+Average Benchmark Topology Simple in t=0.430
+
+Starting Insertion Benchmark Topology Improved Incremental
+Completed Benchmark Topology Improved Incremental in t=0.502
+Starting Insertion Benchmark Topology Improved Incremental
+Completed Benchmark Topology Improved Incremental in t=0.502
+Starting Insertion Benchmark Topology Improved Incremental
+Completed Benchmark Topology Improved Incremental in t=0.517
+Starting Insertion Benchmark Topology Improved Incremental
+Completed Benchmark Topology Improved Incremental in t=0.497
+Starting Insertion Benchmark Topology Improved Incremental
+Completed Benchmark Topology Improved Incremental in t=0.499
+Average Benchmark Topology Improved Incremental in t=0.504
+
+Starting Insertion Benchmark Topology Improved Dynamic
+Completed Benchmark Topology Improved Dynamic in t=3.209
+Starting Insertion Benchmark Topology Improved Dynamic
+Completed Benchmark Topology Improved Dynamic in t=3.172
+Starting Insertion Benchmark Topology Improved Dynamic
+Completed Benchmark Topology Improved Dynamic in t=3.208
+Starting Insertion Benchmark Topology Improved Dynamic
+Completed Benchmark Topology Improved Dynamic in t=3.187
+Starting Insertion Benchmark Topology Improved Dynamic
+Completed Benchmark Topology Improved Dynamic in t=3.251
+Average Benchmark Topology Improved Dynamic in t=3.205
+
+Starting Insertion Benchmark Topology Implicit
+Completed Benchmark Topology Implicit in t=0.720
+Starting Insertion Benchmark Topology Implicit
+Completed Benchmark Topology Implicit in t=0.690
+Starting Insertion Benchmark Topology Implicit
+Completed Benchmark Topology Implicit in t=0.677
+Starting Insertion Benchmark Topology Implicit
+Completed Benchmark Topology Implicit in t=0.708
+Starting Insertion Benchmark Topology Implicit
+Completed Benchmark Topology Implicit in t=0.684
+Average Benchmark Topology Implicit in t=0.696
+

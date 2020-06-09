@@ -161,7 +161,7 @@ def time_initialization_full(file):
     edges = [edge_from_line(line) for line in open(file)]
     graph.add_edges_from(edges)
     t = timeit.timeit(lambda: TrivialMIS.compute(graph), number=1)
-    print("Completed Empty Trivial in t={:.3f}".format(t))
+    print("Completed Full Trivial in t={:.3f}".format(t))
 
 
 if __name__ == '__main__':
