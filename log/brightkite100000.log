@@ -1,37 +1,46 @@
-Completed Empty Trivial in t=0.104
+Starting Insertion Benchmark Brightkite Trivial Init
+Completed Benchmark Brightkite Trivial Init in t=0.081
+Starting Insertion Benchmark Brightkite Simple Init
+Completed Benchmark Brightkite Simple Init in t=0.143
+Starting Insertion Benchmark Brightkite Dynamic Init
+Completed Benchmark Brightkite Dynamic Init in t=0.153
+Starting Insertion Benchmark Brightkite Implicit Init
+Completed Benchmark Brightkite Implicit Init in t=0.018
+
+
 Starting Insertion Benchmark Brightkite Simple
-Completed Benchmark Brightkite Simple in t=0.469
+Completed Benchmark Brightkite Simple in t=0.350
 Starting Insertion Benchmark Brightkite Simple
-Completed Benchmark Brightkite Simple in t=0.449
+Completed Benchmark Brightkite Simple in t=0.360
 Starting Insertion Benchmark Brightkite Simple
-Completed Benchmark Brightkite Simple in t=0.457
+Completed Benchmark Brightkite Simple in t=0.363
 Starting Insertion Benchmark Brightkite Simple
-Completed Benchmark Brightkite Simple in t=0.773
+Completed Benchmark Brightkite Simple in t=0.371
 Starting Insertion Benchmark Brightkite Simple
-Completed Benchmark Brightkite Simple in t=0.616
-Average Benchmark Brightkite Simple in t=0.553
+Completed Benchmark Brightkite Simple in t=0.361
+Average Benchmark Brightkite Simple in t=0.361
 
 Starting Insertion Benchmark Brightkite Improved Dynamic
-Completed Benchmark Brightkite Improved Dynamic in t=2.057
+Completed Benchmark Brightkite Improved Dynamic in t=1.245
 Starting Insertion Benchmark Brightkite Improved Dynamic
-Completed Benchmark Brightkite Improved Dynamic in t=1.947
+Completed Benchmark Brightkite Improved Dynamic in t=1.260
 Starting Insertion Benchmark Brightkite Improved Dynamic
-Completed Benchmark Brightkite Improved Dynamic in t=1.970
+Completed Benchmark Brightkite Improved Dynamic in t=1.249
 Starting Insertion Benchmark Brightkite Improved Dynamic
-Completed Benchmark Brightkite Improved Dynamic in t=2.055
+Completed Benchmark Brightkite Improved Dynamic in t=1.256
 Starting Insertion Benchmark Brightkite Improved Dynamic
-Completed Benchmark Brightkite Improved Dynamic in t=2.052
-Average Benchmark Brightkite Improved Dynamic in t=2.016
+Completed Benchmark Brightkite Improved Dynamic in t=1.250
+Average Benchmark Brightkite Improved Dynamic in t=1.252
 
 Starting Insertion Benchmark Brightkite Implicit
-Completed Benchmark Brightkite Implicit in t=1.708
+Completed Benchmark Brightkite Implicit in t=0.786
 Starting Insertion Benchmark Brightkite Implicit
-Completed Benchmark Brightkite Implicit in t=1.741
+Completed Benchmark Brightkite Implicit in t=0.789
 Starting Insertion Benchmark Brightkite Implicit
-Completed Benchmark Brightkite Implicit in t=1.711
+Completed Benchmark Brightkite Implicit in t=0.801
 Starting Insertion Benchmark Brightkite Implicit
-Completed Benchmark Brightkite Implicit in t=1.670
+Completed Benchmark Brightkite Implicit in t=0.795
 Starting Insertion Benchmark Brightkite Implicit
-Completed Benchmark Brightkite Implicit in t=1.671
-Average Benchmark Brightkite Implicit in t=1.700
+Completed Benchmark Brightkite Implicit in t=0.795
+Average Benchmark Brightkite Implicit in t=0.793
 
