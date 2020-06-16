@@ -68,6 +68,16 @@ def average_deletion_runs(algo_cls, graph, removals, benchmark_name="", runs=5):
     return total
 
 
+def benchmark_initialization(algo_cls, graph, benchmark_name=""):
+    def execute():
+        algo = algo_cls(graph)
+
+    print('Starting Insertion Benchmark ' + benchmark_name)
+    t = timeit.timeit(lambda: algo_cls(graph), number=1)
+    print("Completed Benchmark {} in t={:.3f}".format(benchmark_name, t))
+    return t
+
+
 def graph_from_file(file):
     g = nx.Graph()
     edges = []
@@ -87,10 +97,15 @@ def brightkite(data_dir, seed=2, iterations=10000):
     removals = [edges[i] for i in idx]
 
     time_initialization_full(file)
-    # average_deletion_runs(TrivialMIS, graph, removals, "Brightkite Trivial")
+    benchmark_initialization(TrivialMIS, graph, "Brightkite Trivial Init")
+    benchmark_initialization(SimpleMIS, graph, "Brightkite Simple Init")
+    benchmark_initialization(ImprovedDynamicMIS, graph, "Brightkite Dynamic Init")
+    benchmark_initialization(ImplicitMIS, graph, "Brightkite Implicit Init")
+
+    average_deletion_runs(TrivialMIS, graph, removals, "Brightkite Trivial")
     average_deletion_runs(SimpleMIS, graph, removals, "Brightkite Simple")
     average_deletion_runs(ImprovedDynamicMIS, graph, removals, "Brightkite Improved Dynamic")
-    average_deletion_runs(ImprovedDynamicMIS, graph, removals, "Brightkite Implicit")
+    average_deletion_runs(ImplicitMIS, graph, removals, "Brightkite Implicit")
 
 
 # In the final graph all nodes are considered light
@@ -99,7 +114,7 @@ def wildbirds(data_dir):
     nodes = nodes_from_file(file)
     edges = [edge_from_line(line) for line in open(file)]
     time_initialization_empty(file)
-    average_insertion_runs(TrivialMIS, nodes, edges, 'Wildbirds Trivial')
+    # average_insertion_runs(TrivialMIS, nodes, edges, 'Wildbirds Trivial')
     average_insertion_runs(SimpleMIS, nodes, edges, 'Wildbirds Simple')
     average_insertion_runs(ImprovedIncrementalMIS, nodes, edges, 'Wildbirds Improved Incremental')
     average_insertion_runs(ImprovedDynamicMIS, nodes, edges, 'Wildbirds Improved Dynamic')
@@ -175,10 +190,10 @@ if __name__ == '__main__':
     # wildbirds(data_dir)
     # topology(data_dir)
     # facebook(data_dir)
-    youtube(data_dir)
+    # youtube(data_dir)
 
     # Deletions
-    # brightkite(data_dir, iterations=1000)
+    brightkite(data_dir, iterations=1000)
     # brightkite(data_dir, iterations=10000)
     # brightkite(data_dir, iterations=100000)
 

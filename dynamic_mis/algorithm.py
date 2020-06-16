@@ -229,6 +229,11 @@ class SimpleMIS(Algorithm):
 class ImprovedIncrementalMIS(SimpleMIS):
 
     # Calling the super class makes it slower than the direct implementation
+    # def insert_edge(self, u, v):
+    #     lower_deg, higher_deg = (u, v) if self._graph.degree(u) < self._graph.degree(v) else (v, u)
+    #     # super(ImprovedIncrementalMIS, self).insert_edge(lower_deg, higher_deg)
+    #     SimpleMIS.insert_edge(self, lower_deg, higher_deg)
+
     def insert_edge(self, u, v):
         assert u in self._graph and v in self._graph
         if self._graph.has_edge(u, v):
@@ -294,34 +299,6 @@ class ImprovedDynamicMIS(Algorithm):
                     self._light_mis.add(v)
                     for w in self._graph[v]:
                         self._light_count[w] += 1
-            # for v in self._graph:
-            #     if self._graph.degree[v] >= self._delta_c:
-            #         self._heavy_nodes.add(v)
-            #     else:
-            #         can_be_added = True
-            #         for w in self._graph[v]:
-            #             if w in self._light_mis:
-            #                 can_be_added = False
-            #         if can_be_added:
-            #             self._light_mis.add(v)
-
-            # light_nodes = set()
-            # self._heavy_nodes.clear()
-            # for v in self._graph:
-            #     if self._is_heavy(v):
-            #         self._heavy_nodes.add(v)
-            #     else:
-            #         light_nodes.add(v)
-
-            # Initialise light node mis via Trivial Algo
-            # self._light_mis = TrivialMIS.compute(self._graph.subgraph(light_nodes))
-            # self._light_mis = TrivialMIS.compute(self._graph, candidate_filter=self._is_light)
-            # self._light_count.clear() # New dict vs clear(): what is faster?
-
-            # for u in self._light_mis:
-            #     for v in self._graph[u]:
-            #         self._light_count[v] += 1
-
 
             # These assertions slow down execution
             # assert self.is_valid_light_mis()
@@ -498,9 +475,8 @@ class ImprovedDynamicMIS(Algorithm):
         return self._graph.degree[v] >= self._delta_c and self._light_count[v] == 0
 
     def _compute_heavy_mis(self):
-        self._heavy_mis = TrivialMIS.compute(self._graph.subgraph(self._heavy_nodes), candidate_filter=lambda n: self._light_count[n] == 0)
-        # self._heavy_mis = TrivialMIS.compute(self._graph, candidate_filter=lambda n: n in self._heavy_nodes and self._light_count[n] == 0)
-        # self._heavy_mis = TrivialMIS.compute(self._graph, candidate_filter=self._candidate_for_heavy_mis)
+        self._heavy_mis = TrivialMIS.compute(self._graph.subgraph(self._heavy_nodes),
+                                             candidate_filter=lambda n: self._light_count[n] == 0)
 
     def is_valid_mis(self):
         assert self.is_valid_light_count()
@@ -516,7 +492,6 @@ class ImprovedDynamicMIS(Algorithm):
         return True
 
     def is_valid_light_count(self):
-
         for v in self._graph.nodes:
             sum = 0
             for n in self._graph[v]:
@@ -536,6 +511,7 @@ class ImplicitMIS(Algorithm):
         self._heavy_threshold = self._m_c ** 0.5
         self._edge_count = self._m_c
         self._almost_heavy_count = dict()
+        self._almost_heavy_nodes = None
         self._independent_set = set()
 
         self._count = defaultdict(lambda: 0)
@@ -557,10 +533,13 @@ class ImplicitMIS(Algorithm):
         if self._edge_count <= self._m_c/2.0:
             # Lowering the boundary
             # Have we calculated all counts?
-            for v in self._almost_heavy_nodes():
+            for v in self.almost_heavy_nodes():
                 if v not in self._almost_heavy_count:
                     self._almost_heavy_count[v] = self._calculate_count(v)
-            assert all(v in self._almost_heavy_count for v in self._almost_heavy_nodes())
+            # for v in self._almost_heavy_nodes():
+            #     if v not in self._almost_heavy_count:
+            #         self._almost_heavy_count[v] = self._calculate_count(v)
+            assert all(v in self._almost_heavy_count for v in self.almost_heavy_nodes())
             self._count = {**self._count, **self._almost_heavy_count}
             # for v in self._graph:
             #     if self.is_heavy(v):
@@ -583,6 +562,7 @@ class ImplicitMIS(Algorithm):
         self._m_c = self._edge_count
         self._heavy_threshold = new_threshold
         self._almost_heavy_count.clear()
+        self._almost_heavy_nodes = None
         # self._almost_heavy_count = dict()
         return True
 
@@ -605,6 +585,7 @@ class ImplicitMIS(Algorithm):
         for node, other in [(u, v), (v, u)]:
             if self.is_heavy(node) and node not in self._count:
                 self._count[node] = self._calculate_count(node)
+                # _calculate_count already sees edge (node, other) -> result is 1 too high
                 if other in self._independent_set:
                     self._count[node] -= 1
 
@@ -640,16 +621,15 @@ class ImplicitMIS(Algorithm):
     def update_almost_heavy(self):
         if self._edge_count < self._m_c:
             # Calculate the count of one node that will become heavy in the next boundary reduction
-            almost_heavy = self._almost_heavy_nodes()
-            remaining = almost_heavy - set(self._almost_heavy_count.keys())
+            if self._almost_heavy_nodes is None:
+                self._almost_heavy_nodes = self.almost_heavy_nodes()
 
-            if len(remaining) > 0:
-                node = remaining.pop()
+            if len(self._almost_heavy_nodes) > 0:
+                node = self._almost_heavy_nodes.pop()
                 self._almost_heavy_count[node] = self._calculate_count(node)
         elif len(self._almost_heavy_count) > 0:
             # Clear calculations
             self._almost_heavy_count.clear()
-            # self._almost_heavy_count = dict()
 
     def is_heavy(self, node):
         return self._graph.degree[node] > self._heavy_threshold
@@ -660,7 +640,7 @@ class ImplicitMIS(Algorithm):
     def is_almost_heavy(self, node):
         return self._heavy_threshold >= self._graph.degree[node] >= (self._m_c / 2.0) ** 0.5
 
-    def _almost_heavy_nodes(self):
+    def almost_heavy_nodes(self):
         f = filter(self.is_almost_heavy, self._graph.nodes)
         return set(f)
 
