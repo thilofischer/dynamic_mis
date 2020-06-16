@@ -42,6 +42,8 @@
 
   \begin{itemize}
     \item Python 3.8.2
+    \item \textasciitilde 1000 Lines (algorithms + test + benchmarks)
+
     \item Strategy Design Pattern
   \end{itemize}
 
@@ -61,7 +63,15 @@
   \end{center}
 \end{frame}
 
-% \section{}
+\section{Testing}
+\begin{frame}{Testing}
+  \begin{itemize}
+    \item $G(n=20, p=0.3)$ graph used
+    \item Remove/insert all nodes/edges
+    \item Verify correctness after each update
+  \end{itemize}
+\end{frame}
+
 \section{Evaluation}
 
 \begin{frame}{Evaluation: Setup}
@@ -94,22 +104,11 @@
   \end{tabular}
   \end{table}
   \begin{itemize}
-    \item time in seconds
+    \item Average time in seconds
     \item DNF: did not finish after 2 minutes
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Evaluation: Insertion Conclusion}
-  \begin{itemize}
-    \item Function call may have non-negligible overhead
-    \item Caching values is important
-      \begin{itemize}
-        \item edge count
-        \item set of heavy nodes
-      \end{itemize}
-    \item Connect battery to power while benchmarking
-  \end{itemize}
-\end{frame}
 
 \begin{frame}{Evaluation: Edge Removal}
   \begin{itemize}
@@ -118,8 +117,8 @@
         \item 58,228 Nodes
         \item 214,078 Edges
       \end{itemize}
+    \item Repeatable: same order of edge deletions
     \item Varying number of edge deletions
-    \item Same edges deleted in all runs
   \end{itemize}
 \end{frame}
 
@@ -140,11 +139,34 @@
   \end{tabular}
   \end{table}
   \begin{itemize}
-    \item time in seconds
+    \item Average time in seconds
     \item DNF: did not finish after 2 minutes
-    \item Incremental Algorithm does not support edge deletions
+    % \item Incremental Algorithm does not support edge deletions
+    \item theoretical complexity can be misleading 
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Evaluation: Lessons Learned}
+  \begin{itemize}
+    % \item Function call may have non-negligible overhead
+    \item In-lining code can save alot of time
+    \item Caching values is important
+      \begin{itemize}
+        \item edge count
+        \item set of heavy nodes
+      \end{itemize}
+    \item Connect to AC power while benchmarking
+      \begin{itemize}
+        \item Powersaving on battery mode make comparisons difficult!
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Resources}
+  \begin{itemize}
+    \item Code and slides at: \\
+          \href{https://www.github.com/thilofischer/dynamic_mis}{github.com/thilofischer/dynamic\_mis}
+  \end{itemize}
+\end{frame}
 
 \end{document}
