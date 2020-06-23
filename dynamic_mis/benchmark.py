@@ -73,7 +73,7 @@ def benchmark_initialization(algo_cls, graph, benchmark_name=""):
         algo = algo_cls(graph)
 
     print('Starting Insertion Benchmark ' + benchmark_name)
-    t = timeit.timeit(lambda: algo_cls(graph), number=1)
+    t = timeit.timeit(lambda: algo_cls(graph), number=5) / 5
     print("Completed Benchmark {} in t={:.3f}".format(benchmark_name, t))
     return t
 
@@ -96,7 +96,6 @@ def brightkite(data_dir, seed=2, iterations=10000):
     idx = rnd.choice(len(edges), size=iterations, replace=False)
     removals = [edges[i] for i in idx]
 
-    time_initialization_full(file)
     benchmark_initialization(TrivialMIS, graph, "Brightkite Trivial Init")
     benchmark_initialization(SimpleMIS, graph, "Brightkite Simple Init")
     benchmark_initialization(ImprovedDynamicMIS, graph, "Brightkite Dynamic Init")

@@ -58,9 +58,6 @@ The code uses the networkx library as the backend for graph operations.
 
 Furthermore numpy.random is used to generate reproducible random numbers.
 
-To visualise and animate the graphs, matplotlib is used.
-
-
 
 <!-- USAGE EXAMPLES -->
 ## Usage
@@ -101,3 +98,15 @@ algo.remove_node(v)
 
 Note that the complexity of these function calls depends on the specific algorithm.
 
+## Benchmarking
+
+The code has been benchmarked using different networks from the Koblenz Network Collection.
+To execute a specific bechnmark uncomment the relevant section in `benchmark.py`.
+
+Then execute 
+```
+python3 -m dynamic_mis.benchmark data_dir/
+```
+
+`data_dir` is the path to the directory where the network files are located.
+The edge files should contain only edge data and no additional lines with metadata.
