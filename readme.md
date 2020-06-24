@@ -101,7 +101,7 @@ Note that the complexity of these function calls depends on the specific algorit
 ## Benchmarking
 
 The code has been benchmarked using different networks from the Koblenz Network Collection.
-To execute a specific bechnmark uncomment the relevant section in `benchmark.py`.
+To execute a specific benchmark uncomment the relevant section in `benchmark.py`.
 
 Then execute 
 ```
