@@ -59,14 +59,14 @@ is introduced.
 A graph $G = (V, E)$ is a tuple consisting of a set of nodes $V$ and a set of
 edges $E \subset V \times V$. The number of nodes is denoted by $n$, the number
 of edges by $m$. The degree of a node $v$ is $deg(v)$. The maximum degree is
-refered to by $\Delta$.
+refered to as $\Delta$.
 
 An independent set $IS$ is a subset of nodes with the property that no two nodes
 in the $IS$ are neighbours, as formalised in equation \ref{eq:is}.
 
 \begin{equation}
 	\label{eq:is}
-\forall u, v \in IS: {u, v} \notin E
+\forall u, v \in IS: \{u, v\} \notin E
 \end{equation}
 
 An independent set is considered maximal, if no node can be added to it without
@@ -76,19 +76,19 @@ is an IS with the biggest possible size.
 
 To compute a MIS for a given graph, it is possible to loop over all nodes and
 consider a node to be in the MIS if no previous neighboring node is inside the
-MIS. This approach has a complexity of $\mathcal{O}(m)$, and is denoted by the
-symbol \trivial in this report.
+MIS. This approach has a complexity of $\mathcal{O}(m)$, and is called the
+\textit{Trivial} algorithm \trivial in this report.
 
-However, in practice edges and nodes might be removed or added to the graph. In
-this dynamic setting, the algorithm should calculate the set of nodes in the MIS
-after each update. Executing the algorithm again after every update is not
-optimal. Instead it is desirable to maintain information about the MIS across
-updates to increase calculation speed.
+However, in practice edges and nodes might be removed or added dynamically to
+the graph. In this dynamic setting, the algorithm should calculate the set of
+nodes in the MIS after each update. Executing \trivial again after every
+update is not optimal. Instead it is desirable to maintain information about the
+MIS across updates to increase calculation speed.
 
 Alternatively, this model can be relaxed to an implicit model. Then, the
 algorithm is not required to maintain an explicit copy of the MIS. Instead it
-implements a query system, where it answers whether a specific node is in the
-MIS or not \cite{gupta2018simple}.
+implements a query system, where it answers whether or not a specific node is in
+the MIS \cite{gupta2018simple}.
 
 The next section \ref{Algorithms} presents several different algorithms to
 compute a MIS. In section \ref{Implementation} details of the implementation are
@@ -137,36 +137,35 @@ $\mathcal{O}(n)$.
 The second algorithm is called the \textit{Simple} \simple algorithm. The
 approach in this algorithm is to maintain a counter for each node. The values of
 this counter represents how many of its neighbours are inside the MIS. If the
-counter for a node is zero, then this node is inside the MIS. To keep this
-counter value accurate, every node that leaves or enters the MIS has to inform
-its neighbours so that they can update their counter value. Each update may
-cause one node to leave the MIS and may cause up to $\Delta$ nodes to join the
-MIS. These nodes also have to inform their neighbours. Overall the amortized
-update time complexity is \OD.
+counter for a node is zero, then this node should be inside the MIS. To keep
+this counter value accurate, every node that leaves or enters the MIS has to
+inform its neighbours so that they can update their counter value. Each update
+may cause one node to leave the MIS and may cause up to $\Delta$ nodes to join.
+These joining nodes also have to inform their neighbours. Overall the amortized update
+time complexity is \OD.
 
 Gupta et al. presented a slighty improved version of this \simple algorithm. In
 this report it is refered to as the \textit{Improved Incremental} \improvedinc
 algorithm. The difference to \simple is in the case of an edge insertion between
 two nodes that are in the MIS. \simple does not specify which node should leave
 the MIS. In \improvedinc, the node with lower degree is removed. This leads to
-smaller number of neighbours that need to be informed about the state change.
+a smaller number of neighbours that need to be informed about the state change.
 
 The fourth algorithm \dynamic has a very fast amortized update time complexity
-of \linebreak $\mathcal{O}(min\{\Delta, m^{2/3}\})$.
-This is achieved by treating nodes differently based on their degree.
-Heavy nodes are nodes with relatively many incident edges, while light nodes are
-those with fewer neighbours.
-
-The MIS is computed in two steps. In \simple a heavy nodes has to inform many
-neighbours. For this reason, \dynamic only maintains a counter for light nodes.
-The counter is maintained in the same way as in the \textit{Simple} algorithm.
-At this stage the selected light nodes form an independent set but it may not be
-maximal. So after every update, the \trivial algorithm is applied to the heavy
-nodes that are not adjacent to a light node that is in the MIS.
+of \linebreak $\mathcal{O}(min\{\Delta, m^{2/3}\})$. This is achieved by
+treating nodes differently based on their degree. Heavy nodes are nodes with
+relatively many incident edges, while light nodes are those with fewer
+neighbours. The MIS is computed in two steps. In \simple a heavy nodes has to
+inform many neighbours whenever it leaves or joins. For this reason, \dynamic
+only maintains a counter for light nodes. The counter is maintained in the same
+way as in the \textit{Simple} algorithm. At this stage the selected light nodes
+form an independent set but it may not be maximal. So after every update, the
+\trivial algorithm is applied to the heavy nodes that are not adjacent to a
+light node that is in the MIS.
 
 The final algorithm \implicit operates in a different model than the previous
 algorithms. Instead of maintaining an explicit copy of the MIS, only an
-independent set is kept in memory. In this report this algorithm is called the
+independent set is kept in memory. In this report, this algorithm is called the
 \textit{Implicit} algorithm. To get information about the MIS, the user of the
 algorithm has to query the algorithm about the state of a specific node. Then
 the algorithm checks whether the node is in the independent set or if it can be
@@ -197,6 +196,8 @@ is used. To perform randomized operations, \textit{numpy.random} is used.
 The strategy design pattern is applied to give all implementations a unified
 interface. This interface is visualised in the UML diagram that can be seen in
 figure \ref{fig:uml}.
+The different algorithms shown in section \ref{Algorithms} are implemented
+as subclasses of \textit{Algorithm} and implement the six abstract functions.
 
 %
 % explain what each funciton does.
@@ -229,14 +230,11 @@ that the algorithm computed, is a valid MIS. This function should always return
 \lstinline{True}. To access information about the MIS, the two functions
 \lstinline{is_in_mis( v )} and \lstinline{get_mis()} can be used. The former
 checks whether a given node is in the MIS, and the latter returns a set of all
-nodes in the MIS. Note that these functions have side-effects in case the
+nodes in the MIS. Note that these functions have side-effects when the
 \textit{Implicit} algorithm is used.
 
 To perform an update, one of the four update functions can be used. When
 inserting a node, edges to existing nodes can be passed along but are optional.
-
-The different algorithms shown in section \ref{Algorithms} are implemented
-as subclasses of \textit{Algorithm} and implement the six abstract functions.
 
 % All implementations of a MIS algorithm can share
 % To provide a unified interface to all algorithm implementations
@@ -253,7 +251,7 @@ function, an algorithm object was patched using the Python module
 \textit{unittest.mock} to return pre-determined values as an answer. This was
 done to produce valid and invalid maximal independent sets independently of any
 specific implementation. The function is tested against four edge cases, three
-of which expect the return value to be \textit{false}.
+of which expect the return value to be \textit{False}.
 
 Using the \textit{Algorithm.is\_valid\_mis}, function the actual algorithm
 implementations are tested.  To generate data for these testcases $G(n,
@@ -277,9 +275,8 @@ desired graph.
 \label{Evaluation}
 
 To evaluate the performance of the different algorithms, the execution time of
-multiple of updates is measured.
-For this purpose five different datasets with varying size are used. 
-The datasets are called:
+multiple updates is measured. For this purpose five different datasets with
+varying size are used. The datasets are called:
 
 \begin{enumerate}
   \itemsep 0em
@@ -335,7 +332,7 @@ boxplot, because the individual times only show very minor deviations.
 For the detailed output, including the time of every single run, refer to the
 files inside the \textbf{log/} folder in the repository.
 
-Note that in listing \ref{lst:bench} on line 6 the number of runs is set to
+Note that in listing \ref{lst:bench}, on line 6, the number of runs is set to
 one. Because the graph is modified during a run, a new graph instance needs to
 be used for each run. However, the copy operations to create a new graph do not
 depend on the algorithm under evaluation. So these operations should not
@@ -356,7 +353,7 @@ updates that are benchmarked are edge insertions in section
 \label{sec:edgeinsertion}
 
 In table \ref{tab:insertion} the average execution times are shown. The values
-are the average over five runs in seconds. In case the execution took too long,
+are the average over five runs, in seconds. In case the execution took too long,
 the table contains a \textbf{DNF}, denoting that the algorithm did not finish.
 The threshold for this is 2 minutes. This cut-off was chosen to keep the time
 required to perform five iterations of each algorithm manageable. One evaluation
@@ -385,33 +382,32 @@ minutes.
   \end{tabular}
 \end{table}
 
-First note the execution times for the \textit{Trivial} algorithm.
-It is considerably slower than the other algorithms on the smallest dataset.
-And for the next biggest dataset it does not compute the result in 2 minutes.
-This clearly demonstrates the need for a dynamic approach to solve the MIS
-problem in an environment with many updates.
+First note the execution times for the \textit{Trivial} algorithm. It is
+considerably slower than the other algorithms on the smallest dataset. And for
+the next biggest dataset it does not compute the result in 2 minutes. This
+clearly demonstrates the need for a dynamic approach to solve the MIS problem in
+an environment with many updates.
 
 Now compare the execution times of all algorithms on the \textit{Wildbirds}
 dataset. \textit{Simple} is the second fastest after the improved version of it,
-the \textit{Improved Incremental} algorithm. It makes a better choice for removing
-a node from the MIS for the cost of an additional degree comparison.
-In the largest dataset, the improvement to the \textit{Simple} algorithm
-manifest in an improvement of \~9\%, when comparing the \textit{Improved Incremental}
-to the \textit{Simple} algorithm.
+the \textit{Improved Incremental} algorithm. It makes a better choice for
+removing a node from the MIS for the cost of an additional degree comparison. In
+the largest dataset, the improvement to the \textit{Simple} algorithm manifest
+in an improvement of around 9\%, when comparing the \textit{Improved
+Incremental} to the \textit{Simple} algorithm.
 
 The \textit{Dynamic} algorithm presented in \cite{gupta2018simple} performs
-worse than the simpler algorithms. Profiling the code did not reveal
-any obvious bottlenecks for this algorithm.
-However, inspecting the datasets showed that in the \textit{Youtube} dataset
-only six nodes are considered heavy in the full dataset. In the complete graph
-of the \textit{Facebook} dataset no nodes are heavy. The same is true for the
-\textit{Wildbirds} network. In the \textit{Topology} dataset three nodes are
-heavy in the full graph.
-Although it is not as severe, the \textit{Implicit} algorithm is also slower.
+worse than the simpler algorithms. Profiling the code did not reveal any obvious
+bottlenecks for this algorithm. However, inspecting the datasets showed in
+the \textit{Youtube} dataset only six nodes are considered heavy in the full
+dataset. In the complete graph of the \textit{Facebook} dataset no nodes are
+heavy. The same is true for the \textit{Wildbirds} network. In the
+\textit{Topology} dataset three nodes are heavy in the full graph. Although it
+is not as severe, the \textit{Implicit} algorithm is also slower.
 
 Thus it is likely that for these specific datasets, the more sophisticated
-algorithms can not realize their full potential.
-In the contrary, the more complex code adds overhead and slows the execution down.
+algorithms can not realize their full potential. In the contrary, the more
+complex code adds overhead and slows the execution down.
 
 % Rather the more complex code adds overhead that does not help to speed the execution
 % up because it is only applicable for heavy nodes.
@@ -422,13 +418,17 @@ In the contrary, the more complex code adds overhead and slows the execution dow
 % implementation. This factor is not accounted for when considering the asymptotic
 % complexity is evaluated.
 
-A case where this became obvious occured during the implementation of the
-\textit{ImprovedIncremental} algorithm. It is almost identical to the
-\textit{Simple} algorithm. Thus the first implementation used inheritance. This
-approach is shown in listing \ref{lst:slowinc}. However the additional
+Another case where more complex code slowed the execution down noticeably was in the
+implementation of \improvedinc. It is almost identical to the \textit{Simple}
+algorithm. Thus the first implementation used inheritance. This approach is
+shown in listing \ref{lst:slowinc}. However the additional
 \lstinline[]{if}-statement and function call negated the speed improvement from
 differentiating between the lower and higher degree node. The algorithm that is
 faster in theory was actually slower in practice.
+
+Instead, it is faster to inline the code from \textit{Simple}. This inlined
+implementation was used for the benchmarks. Then, an improvement compared to
+\simple can be seen in three of the four datasets.
 
 \begin{lstlisting}[label={lst:slowinc}, caption={Slow implementation}]
 class ImprovedIncrementalMIS(SimpleMIS):
@@ -436,9 +436,6 @@ class ImprovedIncrementalMIS(SimpleMIS):
     lower_deg, higher_deg = (u, v) if self._graph.degree(u) < self._graph.degree(v) else (v, u)
     SimpleMIS.insert_edge(self, lower_deg, higher_deg)
 \end{lstlisting}
-
-Instead it is faster to inline the code from \textit{Simple}. This inlined implementation was used for the benchmarks. And an improvement can be seen in three
-of the four datasets.
 
 % Theoretical does not matter as much for fast code
 % comparison  between Simple and incremental
@@ -466,7 +463,6 @@ only supports incremental updates. For deletions, it is identical to the
 		Removals & Trivial \trivial & Simple \simple & Dynamic \dynamic & Implicit \implicit \\
 		\hline
 		\hline
-		% 1000 & 2.68 & 0.018 & 0.017 & 0.029 \\
 		1000 & 77.246 & 0.136 & 0.158 & 0.100 \\ % the initialisation takes 0.153
 		\hline
 		10,000 & DNF & 0.157 & 0.266 & 0.166 \\
@@ -520,10 +516,13 @@ considered heavy is so high that, for these datasets, no improvement could
 be observed. Rather the more complex code added overhead which slowed the execution
 down.
 
-A conclusion from this observed behavior could be that when chosing an algorithm in practice,
-not only should the theoretical complexity be a factor but also the data it will
-operate on. And whether the algorithm is suited for the specific kind of data.
-
+A conclusion from this observed behavior could be that when chosing an algorithm
+in practice, not only should the theoretical complexity be a factor but also the
+data it will operate on. And whether the algorithm is suited for the specific
+kind of data. In the future, it would be interesting to evaluate the algorithms
+on datasets with a higher density of edges. This could show how \dynamic and
+\implicit perform on data that allows them to leverage their lower theoretical
+complexity.
 
 
 \bibliography{report}{}

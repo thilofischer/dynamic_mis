@@ -10,14 +10,21 @@
 \usepackage{amsmath}
 \usepackage{tikz}
 \usepackage{pgf-umlcd}
+\usepackage{listings}
+\lstset{
+  language=python, frame=single, numbers=left, breaklines=true
+}
+
 \renewcommand{\umlfillcolor}{white}
 \renewcommand{\umldrawcolor}{black}
 
 \usepackage{graphicx}
 
-\newcommand{\trivial}{$\mathcal{A}_T$}
-\newcommand{\simple}{$\mathcal{A}_S$}
-\newcommand{\implicit}{$\mathcal{A}_I$}
+\newcommand{\trivial}{$\mathcal{A}_T$\ }
+\newcommand{\simple}{$\mathcal{A}_S$\ }
+\newcommand{\implicit}{$\mathcal{A}_I$\ }
+\newcommand{\improvedinc}{$\mathcal{A}_{II}$\ }
+\newcommand{\dynamic}{$\mathcal{A}_{D}$\ }
 \newcommand{\M}{$\mathcal{M}$}
 \newcommand{\OD}{$\mathcal{O}(\Delta)$}
 
@@ -37,23 +44,36 @@
   \tableofcontents
 \end{frame}
 
-\section{Structure}
-\begin{frame}{Structure}
+\section{Implementation}
+\begin{frame}{Implementation}
 
   \begin{itemize}
     \item Python 3.8.2
-    \item \textasciitilde 1000 Lines (algorithms + test + benchmarks)
-
-    \item Strategy Design Pattern
+    \item ca. 1000 Lines (algorithms + test + benchmarks)
+      \bigskip
+    \item 5 Algorithms \hfill update complexity
+      \begin{itemize}
+        \item Trivial \hfill $\mathcal{O}(m)$
+        \item Simple \hfill $\mathcal{O}(\Delta)$
+        \item Improved Incremental \hfill $\mathcal{O}(min(\Delta, \sqrt{m}))$
+        \item Dynamic \hfill $\mathcal{O}(min(\Delta, m^{2/3}))$
+        \item Implicit \hfill $\mathcal{O}(min(\Delta, \sqrt{m}))$
+      \end{itemize}
   \end{itemize}
 
-  \pause
-
+\end{frame}
+\begin{frame}{Structure}
+  \begin{itemize}
+    \item Strategy Design Pattern
+  \end{itemize}
   \begin{center}
   \begin{tikzpicture}
-    \begin{class}[text width=8cm]{Algorithm}{0,0}
+    \begin{class}[text width=6cm]{Algorithm}{0,0}
     \attribute {\# \_graph : nx.Graph}
     \operation {+ \_\_init\_\_ ( graph )}
+    \operation {+ is\_valid\_mis () : Bool}
+    \operation [0]{+ is\_in\_mis ( v ) : Bool}
+    \operation [0]{+ get\_mis () : set}
     \operation [0]{+ insert\_edge ( u, v )}
     \operation [0]{+ remove\_edge ( u, v )}
     \operation [0]{+ insert\_node ( v, [edges] )}
@@ -66,10 +86,23 @@
 \section{Testing}
 \begin{frame}{Testing}
   \begin{itemize}
-    \item $G(n=20, p=0.3)$ graph used
     \item Remove/insert all nodes/edges
     \item Verify correctness after each update
+    \item $G(n=20, p=0.3)$ graph
   \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Testing}
+  \begin{lstlisting}[caption=Testing Snippet (Modified)]
+algo = cls(g)
+
+for e in insert_order:
+    algo.insert_edge(*e)
+    valid = algo.is_valid_mis()
+    test.assertTrue(valid)
+
+test.assertTrue(is_isomorphic(g, g_original))
+  \end{lstlisting}
 \end{frame}
 
 \section{Evaluation}
@@ -79,7 +112,7 @@
     \item Hardware: Intel Core i7-1065G7
     \item Average time over 5 runs
     \item Time includes initilization and updates
-    \item Queries are not performed
+    % \item Queries are not performed
       \bigskip
       %\item Comparison with [2] Algorithm was not done
   \end{itemize}
@@ -90,7 +123,7 @@
   \begin{table}[]
   \begin{tabular}{|c|c|c|c|c|c|}
     \hline
-    Data & Trivial & Simple & Incremental & Dynamic & Implicit \\
+    Data & Trivial & Simple & Improved Inc & Dynamic & Implicit \\
     \hline
     \hline
     Wildbirds & 1.281 & 0.013 & 0.012 & 0.064 & 0.020 \\
@@ -129,12 +162,11 @@
     Removals & Trivial & Simple & Dynamic & Implicit \\
     \hline
     \hline
-    % 1000 & 2.68 & 0.018 & 0.017 & 0.029 \\
-    1000 & 119.539 & 0.219 & 0.253 & 0.280 \\ % the initialisation takes 0.153
+    1000 & 77.246 & 0.136 & 0.158 & 0.100 \\ % the initialisation takes 0.153
     \hline
-    10,000 & DNF & 0.259 & 0.441 & 0.433 \\
+    10,000 & DNF & 0.157 & 0.266 & 0.166 \\
     \hline
-    100,000 & DNF & 0.553 & 2.016 & 1.700 \\
+    100,000 & DNF & 0.361 & 1.252 & 0.793 \\
     \hline
   \end{tabular}
   \end{table}
@@ -142,14 +174,13 @@
     \item Average time in seconds
     \item DNF: did not finish after 2 minutes
     % \item Incremental Algorithm does not support edge deletions
-    \item theoretical complexity can be misleading 
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Evaluation: Lessons Learned}
   \begin{itemize}
     % \item Function call may have non-negligible overhead
-    \item In-lining code can save alot of time
+    \item In-lining code can save a lot of time
     \item Caching values is important
       \begin{itemize}
         \item edge count
@@ -157,15 +188,16 @@
       \end{itemize}
     \item Connect to AC power while benchmarking
       \begin{itemize}
-        \item Powersaving on battery mode make comparisons difficult!
+        \item Powersaving on battery mode makes comparisons difficult!
       \end{itemize}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Resources}
   \begin{itemize}
+    \item Questions?
     \item Code and slides at: \\
-          \href{https://www.github.com/thilofischer/dynamic_mis}{github.com/thilofischer/dynamic\_mis}
+      \href{https://www.github.com/thilofischer/dynamic_mis}{github.com/thilofischer/dynamic\_mis}
   \end{itemize}
 \end{frame}
 
